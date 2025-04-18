@@ -5,6 +5,8 @@ __pycache__/
 
 # Utils
 *.http
+app/bnn/output/*
+!app/bnn/output/*.py
 
 # C extensions
 *.so
