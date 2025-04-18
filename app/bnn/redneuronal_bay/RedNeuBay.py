@@ -19,8 +19,13 @@ base_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 outuput_folder = os.path.join(base_dir, "app", "bnn", "output") + os.path.sep
-# Ensure the directory exists
+# Path for saving plots
+plots_folder = os.path.join(base_dir, "app", "data", "plots") + os.path.sep
+cv_plots_folder = os.path.join(plots_folder, "cv") + os.path.sep
+# Ensure the directories exist
 os.makedirs(outuput_folder, exist_ok=True)
+os.makedirs(plots_folder, exist_ok=True)
+os.makedirs(cv_plots_folder, exist_ok=True)
 
 _optimizers = {
     "SGD": SGD,
@@ -335,6 +340,9 @@ class RedNeuBay(object):
             )  # color azul cmap="YlGnBu"
             plt.title("Confusion Matrix - Test")
             plt.ylabel("Classes")
+            # Save the confusion matrix plot instead of displaying it
+            plt.savefig(f"{plots_folder}confusion_matrix_test.png")
+            plt.close()
 
         return mod
 
@@ -429,9 +437,7 @@ class RedNeuBay(object):
             # Graficas de la CV de todos los modelo Acc y loss
 
             # Grafica de Loss sin batch solo con epochs
-            plt.figure()
-            ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             sns.set_theme(style="whitegrid")
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
@@ -441,12 +447,12 @@ class RedNeuBay(object):
 
             plt.legend()
             plt.grid()
-            plt.show()
+            # Save plot instead of displaying it
+            plt.savefig(f"{cv_plots_folder}cv_loss_by_epoch.png")
+            plt.close()
 
             # Grafica de Accuracy sin batch solo con epochs
-            plt.figure()
-            ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             sns.set_theme(style="whitegrid")
             plt.xlabel("Epochs")
             plt.ylabel("Accuracy")
@@ -456,7 +462,9 @@ class RedNeuBay(object):
 
             plt.legend()
             plt.grid()
-            plt.show()
+            # Save plot instead of displaying it
+            plt.savefig(f"{cv_plots_folder}cv_accuracy_by_epoch.png")
+            plt.close()
             # -------------------------------------------------------------
 
         return self.layersObject
@@ -531,14 +539,15 @@ class RedNeuBay(object):
                 b[i] = i
 
             cm_test = pd.DataFrame(cm, index=[i for i in b], columns=[i for i in b])
-            # plt.figure(figsize = (10,7))
-            plt.figure()
+            plt.figure(figsize=(10, 7))
             sns.set(font_scale=1)
             sns.heatmap(
                 cm_test, annot=True, cmap=plt.cm.Reds, fmt="d"
             )  # color azul cmap="YlGnBu"
-            plt.title("Confusion Matrix - Test")
+            plt.title(f"Confusion Matrix - Test (K-fold {k})")
             plt.ylabel("Classes")
-            plt.show()
+            # Save the confusion matrix plot instead of displaying it
+            plt.savefig(f"{cv_plots_folder}confusion_matrix_kfold_{k}.png")
+            plt.close()
 
         return ac

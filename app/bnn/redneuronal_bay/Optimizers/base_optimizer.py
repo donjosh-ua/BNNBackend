@@ -1,5 +1,4 @@
 from __future__ import division
-from abc import abstractmethod, ABCMeta
 import numpy as np
 import torch
 import time as t
@@ -10,9 +9,23 @@ from app.bnn.redneuronal_bay.utils import *
 import matplotlib.pyplot as plt
 import logging
 import seaborn as sns
+import os
+from abc import abstractmethod, ABCMeta
 
-output_folder = "./app/bnn/output/"
-
+# Get the absolute path to the project root
+base_dir = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+)
+output_folder = os.path.join(base_dir, "app", "bnn", "output") + os.path.sep
+# Path for saving plots
+plots_folder = os.path.join(base_dir, "app", "data", "plots") + os.path.sep
+cv_plots_folder = os.path.join(plots_folder, "cv") + os.path.sep
+# Ensure the directories exist
+os.makedirs(output_folder, exist_ok=True)
+os.makedirs(plots_folder, exist_ok=True)
+os.makedirs(cv_plots_folder, exist_ok=True)
 
 "Clase base para todos los optimizadores"
 
@@ -472,48 +485,48 @@ class BaseOptimizer:
 
             # Grafica de Loss tomando en cuenta los batch
             ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
             sns.set_theme(style="whitegrid")
-
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
             plt.title("With batch: Loss - Train")
             plt.plot(np.arange(len(loss_b)), loss_b)
+            # Save plot instead of displaying it
+            plt.savefig(f"{plots_folder}loss_with_batch.png")
+            plt.close()
 
             # Grafica de Loss sin batch solo con epochs
-            plt.figure()
-            ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             sns.set_theme(style="whitegrid")
-            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
             plt.title("Loss - Train")
             plt.plot(np.arange(Rn.epoch), loss_b2)
-            plt.show()
+            # Save plot instead of displaying it
+            plt.savefig(f"{plots_folder}loss_by_epoch.png")
+            plt.close()
 
             # Grafica de Accuracy tomando en cuenta los batch
-            ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             sns.set_theme(style="whitegrid")
-            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Accuracy")
             plt.title("With batch: Accuracy - Train")
             plt.plot(np.arange(len(ac_b)), ac_b)
+            # Save plot instead of displaying it
+            plt.savefig(f"{plots_folder}accuracy_with_batch.png")
+            plt.close()
 
             # Grafica de Accuracy sin batch solo con epochs
-            plt.figure()
-            ### cambio por actualizacion de la nueva libreria ###
-            # plt.style.use('seaborn-whitegrid')
+            plt.figure(figsize=(10, 7))
             sns.set_theme(style="whitegrid")
-            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Accuracy")
             plt.title("Accuracy - Train")
             plt.plot(np.arange(Rn.epoch), ac_b2)
-            plt.show()
+            # Save plot instead of displaying it
+            plt.savefig(f"{plots_folder}accuracy_by_epoch.png")
+            plt.close()
 
         # return (loss_b, ac_b,Rn) # Revisar porque no me retorna los datos
         # print(predicted)
