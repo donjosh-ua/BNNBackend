@@ -6,7 +6,7 @@ import time as t
 import pytensor.tensor as tt
 import pymc as pm
 from torch.autograd import Variable
-from redneuronal_bay.utils import *
+from app.bnn.redneuronal_bay.utils import *
 import matplotlib.pyplot as plt
 import logging
 import seaborn as sns

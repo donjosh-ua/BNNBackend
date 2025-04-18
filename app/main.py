@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.controller import training
 
 app = FastAPI(
     title="XGBoost with FastAPI",
@@ -21,9 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(
-#     neural_network.router, prefix="/neural-network", tags=["Red Neuronal"]
-# )
+app.include_router(training.router, prefix="/train", tags=["Entrenamiento"])
 
 
 @app.get("/", tags=["root"])

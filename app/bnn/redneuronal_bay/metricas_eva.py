@@ -1,5 +1,5 @@
 from __future__ import division, absolute_import
-import redneuronal_bay.utils as utils
+import app.bnn.redneuronal_bay.utils as utils
 import numpy as np
 
 """

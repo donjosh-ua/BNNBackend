@@ -1,19 +1,27 @@
 import numpy as np
 import torch
 import pandas as pd
-from redneuronal_bay.Layers.layers import *
-from redneuronal_bay.utils import *
-from redneuronal_bay.funcion_costo import *
+import os
+from app.bnn.redneuronal_bay.Layers.layers import *
+from app.bnn.redneuronal_bay.utils import *
+from app.bnn.redneuronal_bay.funcion_costo import *
 from collections import defaultdict
-from redneuronal_bay.Optimizers.optimizers import *
-from redneuronal_bay.metricas_eva import *
-from redneuronal_bay.Div_Datos import *
+from app.bnn.redneuronal_bay.Optimizers.optimizers import *
+from app.bnn.redneuronal_bay.metricas_eva import *
+from app.bnn.redneuronal_bay.Div_Datos import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from builtins import input
 
-outuput_folder = "./app/bnn/output/"
+# Get the absolute path to the project root
+base_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+outuput_folder = os.path.join(base_dir, "app", "bnn", "output") + os.path.sep
+# Ensure the directory exists
+os.makedirs(outuput_folder, exist_ok=True)
+
 _optimizers = {
     "SGD": SGD,
     "Nesterov": Nesterov,

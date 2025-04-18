@@ -1,5 +1,5 @@
-from redneuronal_bay.Layers.base_layer import BaseLayer
-from redneuronal_bay.funcion_activacion import *
+from app.bnn.redneuronal_bay.Layers.base_layer import BaseLayer
+from app.bnn.redneuronal_bay.funcion_activacion import *
 import numpy as np
 import torch
 from torch.autograd import Variable
