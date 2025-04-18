@@ -1,11 +1,10 @@
 import numpy as np
 import torch
-import sys
 import pandas as pd
 from redneuronal_bay.Layers.layers import *
 from redneuronal_bay.utils import *
 from redneuronal_bay.funcion_costo import *
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from redneuronal_bay.Optimizers.optimizers import *
 from redneuronal_bay.metricas_eva import *
 from redneuronal_bay.Div_Datos import *

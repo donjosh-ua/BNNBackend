@@ -1,6 +1,5 @@
 import torchvision.datasets as dset
 import torchvision
-import torchvision.transforms as transformsb
 from redneuronal_bay.RedNeuBay import RedNeuBay
 from redneuronal_bay.Layers.layers import *
 from redneuronal_bay.preprocesamiento import *
@@ -8,7 +7,6 @@ from redneuronal_bay.metricas_eva import *
 from redneuronal_bay.funcion_activacion import *
 
 import pandas as pd
-import numpy as np
 
 filename = "./app/data/pima-indians-diabetes.data.csv"
 names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]

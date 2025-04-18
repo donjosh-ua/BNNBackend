@@ -4,22 +4,15 @@ import numpy as np
 import torch
 import time as t
 import pytensor.tensor as tt
-
-# import theano.tensor as tt
 import pymc as pm
-from torch import FloatTensor
 from torch.autograd import Variable
 from redneuronal_bay.utils import *
-from redneuronal_bay.metricas_eva import accuracy_score
-from redneuronal_bay.utils import cambia_labels
-from redneuronal_bay.funcion_activacion import softmax
-from redneuronal_bay import RedNeuBay
 import matplotlib.pyplot as plt
-import copy
 import logging
-
+import seaborn as sns
 
 output_folder = "./app/bnn/output/"
+
 
 "Clase base para todos los optimizadores"
 
@@ -478,7 +471,11 @@ class BaseOptimizer:
         else:
 
             # Grafica de Loss tomando en cuenta los batch
-            plt.style.use("seaborn-whitegrid")
+            ### cambio por actualizacion de la nueva libreria ###
+            # plt.style.use('seaborn-whitegrid')
+            sns.set_theme(style="whitegrid")
+
+            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
             plt.title("With batch: Loss - Train")
@@ -486,7 +483,10 @@ class BaseOptimizer:
 
             # Grafica de Loss sin batch solo con epochs
             plt.figure()
-            plt.style.use("seaborn-whitegrid")
+            ### cambio por actualizacion de la nueva libreria ###
+            # plt.style.use('seaborn-whitegrid')
+            sns.set_theme(style="whitegrid")
+            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
             plt.title("Loss - Train")
@@ -494,7 +494,10 @@ class BaseOptimizer:
             plt.show()
 
             # Grafica de Accuracy tomando en cuenta los batch
-            plt.style.use("seaborn-whitegrid")
+            ### cambio por actualizacion de la nueva libreria ###
+            # plt.style.use('seaborn-whitegrid')
+            sns.set_theme(style="whitegrid")
+            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Accuracy")
             plt.title("With batch: Accuracy - Train")
@@ -502,7 +505,10 @@ class BaseOptimizer:
 
             # Grafica de Accuracy sin batch solo con epochs
             plt.figure()
-            plt.style.use("seaborn-whitegrid")
+            ### cambio por actualizacion de la nueva libreria ###
+            # plt.style.use('seaborn-whitegrid')
+            sns.set_theme(style="whitegrid")
+            # plt.style.use('seaborn-whitegrid')
             plt.xlabel("Epochs")
             plt.ylabel("Accuracy")
             plt.title("Accuracy - Train")
