@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 from app.bnn.RNA import train
 from typing import Optional, List
-import os
-import json
 
 router = APIRouter()
 

@@ -1,12 +1,10 @@
-import torchvision.datasets as dset
-import torchvision
 from app.bnn.redneuronal_bay.RedNeuBay import RedNeuBay
 from app.bnn.redneuronal_bay.Layers.layers import *
 from app.bnn.redneuronal_bay.preprocesamiento import *
 from app.bnn.redneuronal_bay.metricas_eva import *
 from app.bnn.redneuronal_bay.funcion_activacion import *
 import re
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 import pandas as pd
 
@@ -69,6 +67,10 @@ def create_layer(layer_spec: str, bay: bool = False):
         return Sigmoid_Layer(inputs, outputs)
     elif activation_name == "ReLU":
         return ReLU_Layer(inputs, outputs)
+    elif activation_name == "LeakyReLU":
+        return LeakyReLU_Layer(inputs, outputs)
+    elif activation_name == "LogSoftmax":
+        return Log_Softmax_Layer(inputs, outputs)
     else:
         raise ValueError(f"Unknown activation function: {activation_name}")
 
