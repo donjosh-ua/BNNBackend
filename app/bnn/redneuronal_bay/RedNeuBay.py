@@ -12,7 +12,6 @@ from app.bnn.redneuronal_bay.Div_Datos import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-from builtins import input
 
 # Get the absolute path to the project root
 base_dir = os.path.dirname(
@@ -241,7 +240,7 @@ class RedNeuBay(object):
             if self.image == True and X_test == 0:
                 print("")
             else:
-                nam_test = input("With what name do you want to save data test: ")
+                # nam_test = input("With what name do you want to save data test: ")
                 nam_test = nam_test + ".csv"
                 # print(X_test.shape)
                 # print(Y_test.shape)
@@ -304,7 +303,7 @@ class RedNeuBay(object):
             print("---------------------------------------")
 
             # Guardar resultados para analizar con librera de metricas diseñada
-            name_res = input("With what name do you want to save results: ")
+            # name_res = input("With what name do you want to save results: ")
             name_res = name_res + ".csv"
             resultados = {"True": y, "Predicted": pred}
             resultados = pd.DataFrame(

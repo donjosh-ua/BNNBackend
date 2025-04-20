@@ -2,6 +2,9 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 from app.bnn.RNA import train
 from typing import Optional, List
+import os
+import json
+import base64
 
 router = APIRouter()
 
@@ -67,6 +70,40 @@ def save_parameters_to_conf(params: dict):
             f.write(f'    "{key}": {formatted_value}{comma}\n')
 
         f.write("}\n")
+
+
+@router.get("/results")
+async def get_results():
+    """
+    Obtiene los resultados del entrenamiento de la red neuronal, incluyendo
+    el JSON almacenado en results.json y los archivos de imagen (PNG) codificados en Base64.
+
+    Returns:
+        dict: Objeto con dos claves: 'results' con los datos JSON y 'images'
+              con un diccionario de archivos imagen codificados.
+    """
+    try:
+        # Load JSON results from file
+        results_path = "./app/bnn/output/results.json"
+        if not os.path.exists(results_path):
+            raise HTTPException(status_code=404, detail="Results file not found.")
+        with open(results_path, "r") as f:
+            results_data = json.load(f)
+
+        # Load any PNG images from the output folder and encode them
+        images_folder = "./app/data/plots"
+        images = {}
+        for file in os.listdir(images_folder):
+            if file.endswith(".png"):
+                file_path = os.path.join(images_folder, file)
+                with open(file_path, "rb") as img_file:
+                    encoded_image = base64.b64encode(img_file.read()).decode("utf-8")
+                    images[file] = encoded_image
+
+        # Return both the JSON results and encoded images
+        return {"results": results_data, "images": images}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/normal")
