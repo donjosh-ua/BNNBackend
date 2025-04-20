@@ -8,6 +8,7 @@ __pycache__/
 app/bnn/output/*
 !app/bnn/output/*.py
 *.csv
+*.png
 
 # C extensions
 *.so

@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 from app.bnn.RNA import train
 from typing import Optional, List
+import os
+import json
 
 router = APIRouter()
 
@@ -46,6 +48,10 @@ def save_parameters_to_conf(params: dict):
             elif isinstance(value, list):
                 if not value:  # Empty list
                     formatted_value = "[]"
+                elif key == "layers":
+                    # Format layers list with each element in quotes
+                    layer_items = [f'"{layer}"' for layer in value]
+                    formatted_value = f'[{", ".join(layer_items)}]'
                 else:
                     formatted_value = str(value).replace("'", "")
             else:
@@ -76,10 +82,7 @@ async def train_rna(params: NeuralNetworkParameters):
         train_params["Bay"] = train_params.pop("useBayesian")
         train_params["Kfold"] = train_params.pop("numFolds")
         
-        # Remove layers parameter for now as it's not used yet in the train function
-        train_params.pop("layers")
-        
-        # Call the train function with the parameters
+        # Call the train function with the parameters (including layers)
         train(**train_params)
         return {"message": "Entrenamiento de red neuronal completado con éxito y parámetros guardados."}
     except Exception as e:
