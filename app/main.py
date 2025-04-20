@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.controller import training
+from app.controller import training, file_controller
 
 app = FastAPI(
     title="XGBoost with FastAPI",
@@ -23,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(training.router, prefix="/train", tags=["Entrenamiento"])
+app.include_router(file_controller.router, prefix="/files", tags=["Files"])
 
 
 @app.get("/", tags=["root"])
