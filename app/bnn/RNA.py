@@ -5,10 +5,11 @@ from app.bnn.redneuronal_bay.metricas_eva import *
 from app.bnn.redneuronal_bay.funcion_activacion import *
 import re
 from typing import List, Tuple
+from app.config import config
 
 import pandas as pd
 
-filename = "./app/data/pima-indians-diabetes.data.csv"
+filename = config.get("data_file")
 names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]
 df_cla = pd.read_csv(filename, names=names)  # Base de datos tipo data frame
 

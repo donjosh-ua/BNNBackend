@@ -35,8 +35,6 @@ class FileService:
                 # Categorize by extension
                 if filename.lower().endswith('.csv'):
                     files["csv"].append(rel_path)
-                elif any(filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.bmp']):
-                    files["image"].append(rel_path)
         
         return files
     
