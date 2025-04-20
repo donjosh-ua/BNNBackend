@@ -3,15 +3,22 @@ from app.bnn.redneuronal_bay.Layers.layers import *
 from app.bnn.redneuronal_bay.preprocesamiento import *
 from app.bnn.redneuronal_bay.metricas_eva import *
 from app.bnn.redneuronal_bay.funcion_activacion import *
-import re
 from typing import List, Tuple
 from app.config import config
 
+import torchvision
+import torchvision.datasets as dset
+import re
 import pandas as pd
 
-filename = config.get("data_file")
-names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]
-df_cla = pd.read_csv(filename, names=names)  # Base de datos tipo data frame
+# Load the appropriate dataset based on config
+dataset_name = config.get("data_file")
+df_cla = None
+
+if dataset_name != "mnist":
+    filename = dataset_name
+    names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]
+    df_cla = pd.read_csv(filename, names=names)  # Base de datos tipo data frame
 
 
 def parse_layer_spec(layer_spec: str) -> Tuple[str, Tuple[int, int]]:
@@ -145,6 +152,26 @@ def train(alpha=0.001, epoch=20, criteria="cross_entropy", optimizer="SGD", imag
         layers (List[str], optional): List of layer specifications in the format 
                                     "Activation(inputs, outputs)"
     """
+    dataset_name = config.get("data_file")
+    
+    is_mnist = dataset_name == "mnist"
+    
+    if is_mnist:
+        # Set parameters specific to MNIST
+        image = True
+        image_size = 784  # 28x28 images
+        cv = False  # MNIST doesn't use cross-validation
+        
+        # Set up MNIST dataset
+        transforms = torchvision.transforms.Compose([
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.1307,), (0.3081,)),
+        ])
+        
+        root = "./app/data"
+        train_set = dset.MNIST(root=root, train=True, transform=transforms, download=False)
+        test_set = dset.MNIST(root=root, train=False, transform=transforms)
+    
     Red_Bay = RedNeuBay(
         alpha=alpha,
         epoch=epoch,
@@ -177,62 +204,30 @@ def train(alpha=0.001, epoch=20, criteria="cross_entropy", optimizer="SGD", imag
             
         print(f"Using custom architecture with {len(layers)} layers")
     else:
-        # Use default architecture
-        Red_Bay.add(Tanh_Layer(8, 13))  # Capa de entrada
-        Red_Bay.add(Tanh_Layer(13, 8))  # Capa oculta
-        Red_Bay.add(Softmax_Layer(8, 2))
-        print("Using default architecture")
+        # Use appropriate default architecture based on dataset
+        if is_mnist:
+            # MNIST default architecture
+            Red_Bay.add(Tanh_Layer(784, 1000))  # Input layer
+            Red_Bay.add(Tanh_Layer(1000, 50))   # Hidden layer
+            Red_Bay.add(Softmax_Layer(50, 10))  # Output layer (10 digits)
+            print("Using default MNIST architecture")
+        else:
+            # Standard default architecture
+            Red_Bay.add(Tanh_Layer(8, 13))      # Input layer
+            Red_Bay.add(Tanh_Layer(13, 8))      # Hidden layer
+            Red_Bay.add(Softmax_Layer(8, 2))    # Output layer
+            print("Using default architecture")
 
     print(Red_Bay)
-    # Use cross validation or normal training based on parameters
-    if cv:
-        out = Red_Bay.cv_train(df_cla=df_cla)  # Con cross validacion
+    
+    # Train based on dataset type
+    if is_mnist:
+        out = Red_Bay.train(train_set=train_set, test_set=test_set)
     else:
-        out = Red_Bay.train(df_cla=df_cla)  # Sin cross validacion
+        # Use cross validation or normal training based on parameters
+        if cv:
+            out = Red_Bay.cv_train(df_cla=df_cla)  # Con cross validacion
+        else:
+            out = Red_Bay.train(df_cla=df_cla)  # Sin cross validacion
+    
     return out
-
-
-# # torch.manual_seed(123) #fijamos la semilla
-# transforms = torchvision.transforms.Compose(
-#     [
-#         torchvision.transforms.ToTensor(),
-#         torchvision.transforms.Normalize((0.1307,), (0.3081,)),
-#     ]
-# )
-
-# root = "./app/data"
-# train_set = dset.MNIST(root=root, train=True, transform=transforms, download=False)
-# test_set = dset.MNIST(root=root, train=False, transform=transforms)
-
-# Red 1    image_size=784 porque imagen es de 28x28
-
-# Modelo  Tanh y Softmax
-# ------------------------SIN BAYESIANO VALIDACION 50 epochs--------------------------------
-# Red_Bay = RedNeuBay(
-#     alpha=0.001,
-#     epoch=50,
-#     criteria="cross_entropy",
-#     optimizer="SGD",
-#     image_size=784,
-#     verbose=True,
-#     decay=0.0,
-#     momentum=0.9,
-#     image=True,
-#     FA_ext=None,
-#     Bay=False,
-#     save_mod="Img_ori2",
-#     pred_hot=True,
-#     test_size=None,
-#     batch_size=64,
-#     cv=False,
-#     Kfold=5,
-# )
-
-# Red_Bay.add(Tanh_Layer(784, 1000))  # Capa de entrada
-# Red_Bay.add(Tanh_Layer(1000, 50))  # Capa oculta
-# Red_Bay.add(SoftmaxBay_Layer(50,10))     #Capa final
-# Red_Bay.add(Softmax_Layer(50, 10))
-
-# print(Red_Bay)
-# out = Red_Bay.train(train_set=train_set, test_set=test_set)
-# out

@@ -9,21 +9,33 @@ class FileService:
     def __init__(self):
         self.data_dir = "./app/data"
         self.config_file = "./app/config/settings.conf"
+        self.special_datasets = {
+            "mnist": {
+                "description": "MNIST handwritten digits dataset (28x28 grayscale images)",
+                "type": "image",
+                "dir": "./app/data/MNIST"
+            }
+        }
     
-    def get_available_files(self) -> Dict[str, List[str]]:
+    def get_available_files(self) -> Dict[str, List]:
         """
-        Get all available data files categorized by type (csv, image)
+        Get all available data files categorized by type (csv, image, special)
         
         Returns:
-            Dict with two keys: 'csv' and 'image', each containing a list of file paths
+            Dict with keys: 'csv', 'image', and 'special', each containing a list of file paths or dataset info
         """
         files = {
             "csv": [],
-            "image": []
+            "image": [],
+            "special": []
         }
         
         # Walk through the data directory
         for root, dirs, filenames in os.walk(self.data_dir):
+            # Skip special dataset dirs that we handle separately
+            if any(special_dir in root for special_dir in [os.path.join(self.data_dir, "MNIST")]):
+                continue
+                
             for filename in filenames:
                 # Skip __init__.py and other non-data files
                 if filename.startswith('__') or filename.startswith('.'):
@@ -36,6 +48,15 @@ class FileService:
                 if filename.lower().endswith('.csv'):
                     files["csv"].append(rel_path)
         
+        # Add special datasets
+        for name, info in self.special_datasets.items():
+            if os.path.exists(info["dir"]):
+                files["special"].append({
+                    "name": name,
+                    "description": info["description"],
+                    "type": info["type"]
+                })
+        
         return files
     
     def set_selected_dataset(self, file_path: str) -> Dict[str, str]:
@@ -43,12 +64,19 @@ class FileService:
         Update the settings.conf file with the selected dataset
         
         Args:
-            file_path: Path to the selected data file
+            file_path: Path to the selected data file or special dataset name
             
         Returns:
             Dict with the update status
         """
-        # Validate file exists
+        # Check if it's a special dataset
+        if file_path in self.special_datasets:
+            # For special datasets, we just store the name
+            with open(self.config_file, 'w') as f:
+                f.write(f'"data_file": "{file_path}",\n')
+            return {"message": f"Special dataset {file_path} selected successfully", "file": file_path}
+            
+        # Regular file validation
         full_path = os.path.join("./app", file_path) if not file_path.startswith('./app') else file_path
         if not os.path.isfile(full_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -64,7 +92,7 @@ class FileService:
         Get the currently selected dataset from settings.conf
         
         Returns:
-            Dict with the current dataset file path
+            Dict with the current dataset file path or name
         """
         try:
             with open(self.config_file, 'r') as f:
@@ -73,7 +101,15 @@ class FileService:
                     # Parse the setting manually since it's not standard JSON
                     match = re.search(r'"data_file":\s*"([^"]+)"', content)
                     if match:
-                        return {"data_file": match.group(1)}
-                return {"data_file": ""}
+                        data_file = match.group(1)
+                        # Check if it's a special dataset
+                        if data_file in self.special_datasets:
+                            return {
+                                "data_file": data_file,
+                                "type": "special",
+                                "description": self.special_datasets[data_file]["description"]
+                            }
+                        return {"data_file": data_file, "type": "file"}
+                return {"data_file": "", "type": ""}
         except FileNotFoundError:
-            return {"data_file": ""} 
+            return {"data_file": "", "type": ""} 
