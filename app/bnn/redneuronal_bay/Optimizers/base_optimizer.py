@@ -557,7 +557,16 @@ class BaseOptimizer:
             print(f"Best accuracy = {np.round(best_ru_acc*1,2)}%")
         else:
             print(f"Best accuracy = {np.round(best_ru_acc*100.0,2)}% in epoch:{ep}")
-        print("---------------------------------------")
+
+        # save the accuracy value into the bnn/output/results.json file in the accuracy variable
+        with open(output_folder + "results.json", "w") as f:
+            f.write(
+                '{ "accuracy": '
+                + str(np.round(best_ru_acc * 100.0, 2))
+                + ', "epoch": '
+                + str(ep)
+                + "}"
+            )
 
         print("---------------------------------------")
         print("-------Entrenamiento terminado---------")

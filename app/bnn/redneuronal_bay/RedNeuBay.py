@@ -206,7 +206,7 @@ class RedNeuBay(object):
             )
 
         print("-----------------------------------")
-        print("----Iniciando de entrenamiento-----")
+        print("----Iniciando entrenamiento-----")
         self.optimizer.backprop(
             train_loader,
             self,
@@ -431,6 +431,12 @@ class RedNeuBay(object):
             print("----------------------------------------")
             print(f"Accuracy test: {np.round(K_accuracy*100.0,2)}%")
             print("---------------------------------------")
+
+            # save the accuracy value into the bnn/output/results.json file in the accuracy variable
+            with open(outuput_folder + "results.json", "w") as f:
+                f.write(
+                    '{ "accuracy": ' + str(np.round(K_accuracy * 100.0, 2)) + " }\n"
+                )
 
             # ------------------------------------------------------------
             # Graficas de la CV de todos los modelo Acc y loss
