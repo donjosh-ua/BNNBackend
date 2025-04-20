@@ -73,12 +73,11 @@ async def train_rna(params: NeuralNetworkParameters):
         # Convert Pydantic model to dictionary and rename useBayesian to Bay to match API
         train_params = params.model_dump()
         
-        # Save the original parameters to the configuration file
-        save_parameters_to_conf(train_params)
-        
         # Rename parameters for the train function
         train_params["Bay"] = train_params.pop("useBayesian")
         train_params["Kfold"] = train_params.pop("numFolds")
+        
+        save_parameters_to_conf(train_params)
         
         # Call the train function with the parameters (including layers)
         train(**train_params)
