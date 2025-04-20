@@ -13,28 +13,49 @@ names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]
 df_cla = pd.read_csv(filename, names=names)  # Base de datos tipo data frame
 
 
-def train():
+def train(alpha=0.001, epoch=20, criteria="cross_entropy", optimizer="SGD", image_size=None, 
+          verbose=True, decay=0.0, momentum=0.9, image=False, FA_ext=None, Bay=False, 
+          save_mod="ModiR", pred_hot=True, test_size=0.2, batch_size=64, cv=True, Kfold=5):
     """
     Entrenamiento de la red neuronal
+    
+    Args:
+        alpha (float): Learning rate
+        epoch (int): Number of training epochs
+        criteria (str): Loss function
+        optimizer (str): Optimizer type
+        image_size (int, optional): Image size for CNN
+        verbose (bool): Verbose output
+        decay (float): Weight decay
+        momentum (float): Momentum for SGD
+        image (bool): Whether input is image data
+        FA_ext (str, optional): External activation function
+        Bay (bool): Use Bayesian neural network
+        save_mod (str): Model save name
+        pred_hot (bool): Use one-hot prediction
+        test_size (float): Test set ratio
+        batch_size (int): Batch size
+        cv (bool): Use cross-validation
+        Kfold (int): Number of folds for cross-validation
     """
     Red_Bay = RedNeuBay(
-        alpha=0.001,
-        epoch=20,
-        criteria="cross_entropy",
-        optimizer="SGD",
-        image_size=None,
-        verbose=True,
-        decay=0.0,
-        momentum=0.9,
-        image=False,
-        FA_ext=None,
-        Bay=False,
-        save_mod="ModiR",
-        pred_hot=True,
-        test_size=0.2,
-        batch_size=64,
-        cv=True,
-        Kfold=5,
+        alpha=alpha,
+        epoch=epoch,
+        criteria=criteria,
+        optimizer=optimizer,
+        image_size=image_size,
+        verbose=verbose,
+        decay=decay,
+        momentum=momentum,
+        image=image,
+        FA_ext=FA_ext,
+        Bay=Bay,
+        save_mod=save_mod,
+        pred_hot=pred_hot,
+        test_size=test_size,
+        batch_size=batch_size,
+        cv=cv,
+        Kfold=Kfold,
     )
 
     Red_Bay.add(Tanh_Layer(8, 13))  # Capa de entrada
@@ -46,7 +67,7 @@ def train():
     print(Red_Bay)
     # out = Red_Bay.train(df_cla=df_cla) #Sin cross validacion
     out = Red_Bay.cv_train(df_cla=df_cla)  # Con cross validacion
-    out
+    return out
 
 
 # # torch.manual_seed(123) #fijamos la semilla
