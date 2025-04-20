@@ -8,6 +8,7 @@ file_service = FileService()
 
 class DatasetSelection(BaseModel):
     file_path: str
+    has_header: bool
 
 @router.get("/list")
 async def get_available_files():
@@ -35,7 +36,7 @@ async def select_dataset(selection: DatasetSelection):
         Dict with a success message and the selected file
     """
     try:
-        result = file_service.set_selected_dataset(selection.file_path)
+        result = file_service.set_selected_dataset(selection.file_path, selection.has_header)
         return result
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

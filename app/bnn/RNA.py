@@ -13,12 +13,13 @@ import pandas as pd
 
 # Load the appropriate dataset based on config
 dataset_name = config.get("data_file")
+has_header = config.get("has_header")
 df_cla = None
 
 if dataset_name != "mnist":
     filename = dataset_name
     names = ["preg", "plas", "pres", "skin", "test", "mass", "pedi", "age", "class"]
-    df_cla = pd.read_csv(filename, names=names)  # Base de datos tipo data frame
+    df_cla = pd.read_csv(filename, names=names, header=0 if has_header else None)  # Base de datos tipo data frame
 
 
 def parse_layer_spec(layer_spec: str) -> Tuple[str, Tuple[int, int]]:

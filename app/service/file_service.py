@@ -59,7 +59,7 @@ class FileService:
         
         return files
     
-    def set_selected_dataset(self, file_path: str) -> Dict[str, str]:
+    def set_selected_dataset(self, file_path: str, has_header: bool) -> Dict[str, str]:
         """
         Update the settings.conf file with the selected dataset
         
@@ -74,6 +74,7 @@ class FileService:
             # For special datasets, we just store the name
             with open(self.config_file, 'w') as f:
                 f.write(f'"data_file": "{file_path}",\n')
+                f.write(f'"has_header": {has_header},\n')
             return {"message": f"Special dataset {file_path} selected successfully", "file": file_path}
             
         # Regular file validation
@@ -84,7 +85,7 @@ class FileService:
         # Update settings
         with open(self.config_file, 'w') as f:
             f.write(f'"data_file": "{full_path}",\n')
-        
+            f.write(f'"has_header": {has_header},\n')
         return {"message": "Dataset selected successfully", "file": file_path}
     
     def get_current_dataset(self) -> Dict[str, str]:
