@@ -91,7 +91,15 @@ def validate_layers(layers: List[str]):
     Raises:
         ValueError: If layers are invalid
     """
-    valid_activations = ["Tanh", "Softmax", "SoftmaxBay", "Sigmoid", "ReLU"]
+    valid_activations = [
+        "Tanh",
+        "Softmax",
+        "SoftmaxBay",
+        "Sigmoid",
+        "ReLU",
+        "LeakyReLU",
+        "LogSoftmax",
+    ]
 
     for i, layer_spec in enumerate(layers):
         # Check format and extract activation name and dimensions
