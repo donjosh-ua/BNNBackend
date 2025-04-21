@@ -27,11 +27,11 @@ os.makedirs(plots_folder, exist_ok=True)
 os.makedirs(cv_plots_folder, exist_ok=True)
 
 _optimizers = {
-    "SGD": SGD,
-    "Nesterov": Nesterov,
-    "Adagrad": Adagrad,
-    "Adam": Adam,
-    "RMSProp": RMSProp,
+    "sgd": SGD,
+    "nesterov": Nesterov,
+    "adagrad": Adagrad,
+    "adam": Adam,
+    "rmsprop": RMSProp,
 }
 _Criteria = {
     "SSE": SSE,
@@ -97,7 +97,7 @@ class RedNeuBay(object):
         assert (
             momentum >= 0 and momentum <= 1
         ), "Precaucion el momento debe estar en el rango [0,1]"
-        assert optimizer in _optimizers, "{0} el colocado no es compatible".format(
+        assert optimizer in _optimizers, "Optimizer {0} no es compatible".format(
             optimizer
         )
         # assert (metric in _metrics), '{0} no es compatible '.format(metric)
