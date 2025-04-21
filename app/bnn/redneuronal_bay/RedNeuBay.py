@@ -34,10 +34,10 @@ _optimizers = {
     "rmsprop": RMSProp,
 }
 _Criteria = {
-    "SSE": SSE,
+    "sse": SSE,
     "cross_entropy": cross_entropy,
-    "Log_neg": NLLLoss,
-    "entropy_bin": BCELoss,
+    "logneg": NLLLoss,
+    "entropybin": BCELoss,
 }
 _FA_extra = {"softmax": softmax}
 # _metrics = {'MSE':mean_squared_error, 'AS':accuracy_score}
