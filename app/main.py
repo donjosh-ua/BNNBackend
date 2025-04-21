@@ -12,6 +12,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",  # local url
     "https://xgboostfrontend.vercel.app",  # frontend url
+    "https://xgboostfrontend-git-bnn-impl-donjosh-uas-projects.vercel.app",  # frontend test url
 ]
 
 app.add_middleware(
