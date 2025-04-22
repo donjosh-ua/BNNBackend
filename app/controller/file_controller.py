@@ -1,12 +1,17 @@
+import os
+import aiofiles
+import pandas as pd
+
+from fastapi import APIRouter, Form, HTTPException, UploadFile, File
+from app.config import conf_manager
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from app.service.file_service import FileService
 
-import os
-
 router = APIRouter()
 file_service = FileService()
 
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 
 class DatasetSelection(BaseModel):
     file_path: str
@@ -70,38 +75,37 @@ async def get_file_preview(file_path: str = Query(..., description="Relative fil
         raise HTTPException(status_code=500, detail=str(e))
     return {"preview": preview}
 
-
-# @router.post("/select")
-# async def select_dataset(selection: DatasetSelection):
-#     """
-#     Select a dataset to be used for training and analysis
-
-#     Args:
-#         selection: An object containing the file_path to the selected dataset
-
-#     Returns:
-#         Dict with a success message and the selected file
-#     """
-#     try:
-#         file_service.set_selected_dataset(
-#             selection.file_path, selection.has_header
-#         )
-
-#         preview = []
-#         try:
-#             with open(selection.file_path, 'r') as f:
-#                 for _ in range(10):
-#                     line = f.readline()
-#                     if not line:
-#                         break
-#                     preview.append(line.rstrip('\n'))
-#         except Exception as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-    return {"message": f"Selected file set to {selection.file_path}", "preview": preview}
-
+@router.post("/upload")
+async def upload(file: UploadFile = File(...), separator: str = Form(',')):
+    
+    safe_filename = os.path.basename(file.filename)
+    file_path = os.path.join(DATA_DIR, safe_filename)
+    
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    
+    try:
+        contents = await file.read()
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(contents)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Something went wrong: " + str(e))
+    finally:
+        await file.close()
+    
+    try:
+        df = pd.read_csv(file_path, sep=separator)
+        # Replace out-of-range float values (like NaN) with None
+        df = df.where(pd.notnull(df), None)
+        preview = df.head(10).to_dict(orient="records")
+        
+        # Update configuration with the new file settings
+        conf_manager.set_value("selected_file", safe_filename)
+        conf_manager.set_value("loaded_data_path", file_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload succeeded, but file could not be loaded: {e}")
+    
+    return {"message": f"Successfully uploaded and loaded {safe_filename}", "preview": preview}
 
 @router.get("/current")
 async def get_current_dataset():
