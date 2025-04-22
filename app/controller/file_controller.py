@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.service.file_service import FileService
-from typing import Dict, List
+
+import os
 
 router = APIRouter()
 file_service = FileService()
@@ -29,24 +30,64 @@ async def get_available_files():
 
 @router.post("/select")
 async def select_dataset(selection: DatasetSelection):
-    """
-    Select a dataset to be used for training and analysis
-
-    Args:
-        selection: An object containing the file_path to the selected dataset
-
-    Returns:
-        Dict with a success message and the selected file
-    """
     try:
-        result = file_service.set_selected_dataset(
-            selection.file_path, selection.has_header
-        )
-        return result
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        file_service.set_selected_dataset(selection.file_path, selection.has_header)
+        preview = []
+        # If the dataset is "mnist", don't send a preview.
+        if selection.file_path.lower() == "mnist":
+            preview = None
+        else:
+            # Get the directory of the current file (app/controller)
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            # Check if the file_path already starts with "data" to avoid duplication
+            if selection.file_path.startswith("data" + os.path.sep):
+                # remove "data" folder prefix, we'll add it manually
+                relative_path = selection.file_path[len("data" + os.path.sep):]
+            else:
+                relative_path = selection.file_path
+
+            # Build the full path: (../data relative to app/controller)
+            full_path = os.path.join(base_dir, "..", "data", relative_path)
+            with open(full_path, 'r') as f:
+                for _ in range(10):
+                    line = f.readline()
+                    if not line:
+                        break
+                    preview.append(line.rstrip('\n'))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    return {"message": f"Selected file set to {selection.file_path}", "preview": preview}
+
+# @router.post("/select")
+# async def select_dataset(selection: DatasetSelection):
+#     """
+#     Select a dataset to be used for training and analysis
+
+#     Args:
+#         selection: An object containing the file_path to the selected dataset
+
+#     Returns:
+#         Dict with a success message and the selected file
+#     """
+#     try:
+#         file_service.set_selected_dataset(
+#             selection.file_path, selection.has_header
+#         )
+
+#         preview = []
+#         try:
+#             with open(selection.file_path, 'r') as f:
+#                 for _ in range(10):
+#                     line = f.readline()
+#                     if not line:
+#                         break
+#                     preview.append(line.rstrip('\n'))
+#         except Exception as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": f"Selected file set to {selection.file_path}", "preview": preview}
 
 
 @router.get("/current")
