@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import logging
 import seaborn as sns
 import os
+import json
 from abc import abstractmethod, ABCMeta
 
 # Get the absolute path to the project root
@@ -559,14 +560,24 @@ class BaseOptimizer:
             print(f"Best accuracy = {np.round(best_ru_acc*100.0,2)}% in epoch:{ep}")
 
         # save the accuracy value into the bnn/output/results.json file in the accuracy variable
-        with open(output_folder + "results.json", "w") as f:
-            f.write(
-                '{ "accuracy": '
-                + str(np.round(best_ru_acc * 100.0, 2))
-                + ', "epoch": '
-                + str(ep)
-                + "}"
-            )
+        try:
+            # Read existing results if file exists
+            if os.path.exists(output_folder + "results.json"):
+                with open(output_folder + "results.json", "r") as f:
+                    results = json.load(f)
+            else:
+                results = {}
+
+            # Update accuracy and epoch without overwriting other data
+            results["accuracy"] = float(np.round(best_ru_acc * 100.0, 2))
+            results["epoch"] = int(ep)
+
+            # Write the updated results back to the file
+            with open(output_folder + "results.json", "w") as f:
+                json.dump(results, f, indent=4)
+
+        except Exception as e:
+            print(f"Error saving accuracy to results.json: {e}")
 
         print("---------------------------------------")
         print("-------Entrenamiento terminado---------")

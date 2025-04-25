@@ -2,8 +2,10 @@
 Toma la base de datos y la divide en entrenamiento y validacion, además de separar los datos de la etiqueta.
 """
 
-import numpy as np
+import os
+import json
 import torch
+import numpy as np
 from torch.utils.data import Dataset
 from torch.autograd import Variable
 import pandas as pd
@@ -92,6 +94,7 @@ def trat_Dat(df_cla=False, X_cla=False, Y_cla=False, batch_size=64, test_size=0.
     # Cantidad de elementos deacuerdo a cada etiqueta
     print("-----------------------------------")
     print("Frecuencia total por etiqueta")
+    class_counts = df_cla.groupby("class").size()
     print(df_cla.groupby("class").size())
     print("-----------------------------------")
     # Numero de imagenes y dimension (i,j)
@@ -99,6 +102,38 @@ def trat_Dat(df_cla=False, X_cla=False, Y_cla=False, batch_size=64, test_size=0.
     print("Numero de datos =", len(dataset))
     print("Dimension de los datos=", len(dataset), "X", X_cla.shape[1])
     print("-----------------------------------")
+
+    # Save frequency per tag to results.json
+    results_path = os.path.join("app", "bnn", "output", "results.json")
+
+    # Convert class counts to dictionary format
+    class_counts_dict = {
+        f"class_{int(idx)}": int(count) for idx, count in class_counts.items()
+    }
+
+    # Create or update results.json
+    try:
+        if os.path.exists(results_path):
+            with open(results_path, "r") as f:
+                results = json.load(f)
+        else:
+            results = {}
+
+        # Add or update the class frequency data
+        if "overall_class_frequency" not in results:
+            results["overall_class_frequency"] = {}
+
+        results["overall_class_frequency"] = class_counts_dict
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+
+        # Save updated results
+        with open(results_path, "w") as f:
+            json.dump(results, f, indent=4)
+
+    except Exception as e:
+        print(f"Error saving overall class frequency to results.json: {e}")
 
     # -----------------------------------------------------------------------------
 
@@ -158,6 +193,36 @@ def trat_Imag(train_set, test_set=False, batch_size=64, test_size=0.20):
     print("Frecuencia total por etiqueta")
     print(num_lab)
     print("-----------------------------------")
+
+    # Save frecuencia por etiqueta to results.json
+    results_path = os.path.join("app", "bnn", "output", "results.json")
+
+    # Convert frequency data to dictionary format
+    freq_dict = {f"class_{int(idx)}": int(count) for idx, count in num_lab.items()}
+
+    try:
+        # Read existing results if file exists
+        if os.path.exists(results_path):
+            with open(results_path, "r") as f:
+                results = json.load(f)
+        else:
+            results = {}
+
+        # Add or update the image class frequency data
+        if "image_class_frequency" not in results:
+            results["image_class_frequency"] = {}
+
+        results["image_class_frequency"] = freq_dict
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+
+        # Save updated results
+        with open(results_path, "w") as f:
+            json.dump(results, f, indent=4)
+
+    except Exception as e:
+        print(f"Error saving image class frequency to results.json: {e}")
 
     # -----------------------------------------------------------------------------
 
@@ -258,6 +323,31 @@ def cv_trat_Dat(X, Y, batch_size, Kfold, inicio, tra_val, ite):
     print(num_lab)
     print("-----------------------------------")
 
-    # -----------------------------------------------------------------------------
+    # Save Frecuencia por clase to results.json
+    results_path = os.path.join("app", "bnn", "output", "results.json")
+    class_counts = {f"class_{int(rr[0][i])}": int(rr[1][i]) for i in range(len(rr[0]))}
+
+    try:
+        if os.path.exists(results_path):
+            with open(results_path, "r") as f:
+                results = json.load(f)
+        else:
+            results = {}
+
+        # Add or update the class frequency data for this CV fold
+        if "class_frequency" not in results:
+            results["class_frequency"] = {}
+
+        results["class_frequency"][f"cv_fold_{ite+1}"] = class_counts
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+
+        # Save updated results
+        with open(results_path, "w") as f:
+            json.dump(results, f, indent=4)
+
+    except Exception as e:
+        print(f"Error saving class frequency to results.json: {e}")
 
     return train_loader, X_te, Y_te, fin

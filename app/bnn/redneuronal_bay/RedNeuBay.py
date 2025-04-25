@@ -222,7 +222,7 @@ class RedNeuBay(object):
         if self.pred_hot == True:
             if test_set == False and self.image == True:
                 print(
-                    "No se puede predecir ya que no a ingresado la base de datos para el test"
+                    "No se puede predecir ya que no ha ingresado la base de datos para el test"
                 )
             else:
                 nam = "best_" + self.save_mod
@@ -297,9 +297,10 @@ class RedNeuBay(object):
             n_total_row = len(y)
             ac = torch.sum(pred == y).float() / n_total_row
             ac = np.asarray(ac)
+
             print("---------------------------------------")
             print("--------Rendimiento del modelo---------")
-            print(f"Accuracy test: {np.round(ac*100.0,2)}%")
+            print(f"Accuracy test: {np.round(ac * 100.0, 2)}%")
             print("---------------------------------------")
 
             # Guardar resultados para analizar con librera de metricas diseñada
@@ -433,10 +434,23 @@ class RedNeuBay(object):
             print("---------------------------------------")
 
             # save the accuracy value into the bnn/output/results.json file in the accuracy variable
-            with open(outuput_folder + "results.json", "w") as f:
-                f.write(
-                    '{ "accuracy": ' + str(np.round(K_accuracy * 100.0, 2)) + " }\n"
-                )
+            try:
+                # Read existing results if file exists
+                if os.path.exists(outuput_folder + "results.json"):
+                    with open(outuput_folder + "results.json", "r") as f:
+                        results = json.load(f)
+                else:
+                    results = {}
+
+                # Update accuracy without overwriting other data
+                results["accuracy"] = float(np.round(K_accuracy * 100.0, 2))
+
+                # Write the updated results back to the file
+                with open(outuput_folder + "results.json", "w") as f:
+                    json.dump(results, f, indent=4)
+
+            except Exception as e:
+                print(f"Error saving accuracy to results.json: {e}")
 
             # ------------------------------------------------------------
             # Graficas de la CV de todos los modelo Acc y loss
