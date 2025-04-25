@@ -72,6 +72,40 @@ def save_parameters_to_conf(params: dict):
         f.write("}\n")
 
 
+# @router.get("/results")
+# async def get_results():
+#     """
+#     Obtiene los resultados del entrenamiento de la red neuronal, incluyendo
+#     el JSON almacenado en results.json y los archivos de imagen (PNG) codificados en Base64.
+
+#     Returns:
+#         dict: Objeto con dos claves: 'results' con los datos JSON y 'images'
+#               con un diccionario de archivos imagen codificados.
+#     """
+#     try:
+#         # Load JSON results from file
+#         results_path = "./app/bnn/output/results.json"
+#         if not os.path.exists(results_path):
+#             raise HTTPException(status_code=404, detail="Results file not found.")
+#         with open(results_path, "r") as f:
+#             results_data = json.load(f)
+
+#         # Load any PNG images from the output folder and encode them
+#         images_folder = "./app/data/plots"
+#         images = {}
+#         for file in os.listdir(images_folder):
+#             if file.endswith(".png"):
+#                 file_path = os.path.join(images_folder, file)
+#                 with open(file_path, "rb") as img_file:
+#                     encoded_image = base64.b64encode(img_file.read()).decode("utf-8")
+#                     images[file] = encoded_image
+
+#         # Return both the JSON results and encoded images
+#         return {"results": results_data, "images": images}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/results")
 async def get_results():
     """
@@ -79,8 +113,7 @@ async def get_results():
     el JSON almacenado en results.json y los archivos de imagen (PNG) codificados en Base64.
 
     Returns:
-        dict: Objeto con dos claves: 'results' con los datos JSON y 'images'
-              con un diccionario de archivos imagen codificados.
+        dict: Objeto con los datos JSON y las imágenes codificadas en base64.
     """
     try:
         # Load JSON results from file
@@ -90,18 +123,68 @@ async def get_results():
         with open(results_path, "r") as f:
             results_data = json.load(f)
 
-        # Load any PNG images from the output folder and encode them
+        # Load regular PNG images from the plots folder
         images_folder = "./app/data/plots"
         images = {}
-        for file in os.listdir(images_folder):
-            if file.endswith(".png"):
-                file_path = os.path.join(images_folder, file)
-                with open(file_path, "rb") as img_file:
-                    encoded_image = base64.b64encode(img_file.read()).decode("utf-8")
-                    images[file] = encoded_image
+        if os.path.exists(images_folder):
+            for file in os.listdir(images_folder):
+                if file.endswith(".png"):
+                    file_path = os.path.join(images_folder, file)
+                    with open(file_path, "rb") as img_file:
+                        encoded_image = base64.b64encode(img_file.read()).decode(
+                            "utf-8"
+                        )
+                        images[file] = encoded_image
 
-        # Return both the JSON results and encoded images
-        return {"results": results_data, "images": images}
+        # Load CV-specific images from the cv subfolder
+        cv_images_folder = os.path.join(images_folder, "cv")
+        if os.path.exists(cv_images_folder):
+            for file in os.listdir(cv_images_folder):
+                if file.endswith(".png"):
+                    file_path = os.path.join(cv_images_folder, file)
+                    with open(file_path, "rb") as img_file:
+                        encoded_image = base64.b64encode(img_file.read()).decode(
+                            "utf-8"
+                        )
+                        # Add to images with cv/ prefix to distinguish them
+                        images[f"cv/{file}"] = encoded_image
+
+        # Format all numerical results for better readability
+        formatted_results = {}
+
+        # Handle accuracy and epoch specially
+        if "accuracy" in results_data:
+            formatted_results["Accuracy"] = f"{results_data['accuracy']}%"
+        if "epoch" in results_data:
+            formatted_results["Best Epoch"] = str(results_data["epoch"])
+
+        # Format class frequencies
+        if "overall_class_frequency" in results_data:
+            class_freq = []
+            for class_name, count in results_data["overall_class_frequency"].items():
+                class_freq.append(f"{class_name}: {count}")
+            formatted_results["Class Frequency"] = ", ".join(class_freq)
+
+        if "image_class_frequency" in results_data:
+            img_class_freq = []
+            for class_name, count in results_data["image_class_frequency"].items():
+                img_class_freq.append(f"{class_name}: {count}")
+            formatted_results["Image Class Frequency"] = ", ".join(img_class_freq)
+
+        # Handle CV fold class frequencies
+        if "class_frequency" in results_data:
+            for fold, freqs in results_data["class_frequency"].items():
+                fold_freqs = []
+                for class_name, count in freqs.items():
+                    fold_freqs.append(f"{class_name}: {count}")
+                formatted_results[f"Class Frequency ({fold})"] = ", ".join(fold_freqs)
+
+        # Return both the formatted results and encoded images
+        return {
+            "text_results": formatted_results,
+            "raw_results": results_data,
+            "images": images,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

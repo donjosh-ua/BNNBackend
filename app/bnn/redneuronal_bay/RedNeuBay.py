@@ -537,8 +537,34 @@ class RedNeuBay(object):
             print("---------------------------------------")
             print("--Rendimiento del modelo-Kfold=", (k), "--")
             print("----------------------------------------")
-            print(f"Accuracy test: {np.round(ac*100.0,2)}%")
+            accuracy_value = np.round(ac * 100.0, 2)
+            print(f"Accuracy test: {accuracy_value}%")
             print("---------------------------------------")
+
+            # Save each fold's accuracy to results.json
+            try:
+                results_path = os.path.join(outuput_folder, "results.json")
+
+                # Read existing results if file exists
+                if os.path.exists(results_path):
+                    with open(results_path, "r") as f:
+                        results = json.load(f)
+                else:
+                    results = {}
+
+                # Create or update the fold_accuracies section
+                if "fold_accuracies" not in results:
+                    results["fold_accuracies"] = {}
+
+                # Add this fold's accuracy
+                results["fold_accuracies"][f"fold_{k}"] = float(accuracy_value)
+
+                # Write the updated results back to the file
+                with open(results_path, "w") as f:
+                    json.dump(results, f, indent=4)
+
+            except Exception as e:
+                print(f"Error saving fold accuracy to results.json: {e}")
 
             print("---------------------------------------")
             print("-------matriz de confusión-------------")
@@ -570,3 +596,86 @@ class RedNeuBay(object):
             plt.close()
 
         return ac
+
+    # def cv_predict(self, mod, x, y=0, img=True, image_size=1, target=True, k=0):
+    #     """
+    #     Funcion para predecir
+    #     :x: test
+    #     :regresa: valores predichos
+    #     """
+
+    #     print("----------------------------------------")
+    #     print("--Iniciando predicción Kfold=", (k), "--")
+    #     print("----------------------------------------")
+    #     outputs = []
+
+    #     if img == True:
+    #         enput = x.view(-1, image_size)
+    #     else:
+    #         enput = torch.FloatTensor(x)
+    #         y = torch.Tensor(y)
+
+    #     for i in range(len(mod)):
+    #         layer = mod[i]
+    #         # print('entrada',input.shape)
+    #         # print('pesos',layer.weights.shape)
+    #         # print('sesgo',layer.bias.shape)
+
+    #         a = 1
+    #         Output = layer.funcion_activacion(
+    #             torch.add(torch.matmul(enput, layer.weights), layer.bias), a
+    #         )
+    #         Output = torch.FloatTensor(Output)
+    #         outputs = Output
+    #         enput = Output
+    #         # print(outputs)
+    #         # print('vuelta',i)
+
+    #     _, pred = torch.max(outputs, 1)
+
+    #     if target == False:
+    #         print(pred)
+    #     else:
+    #         # print(pred)
+    #         n_total_row = len(y)
+    #         ac = torch.sum(pred == y).float() / n_total_row
+    #         ac = np.asarray(ac)
+
+    #         # --------
+
+    #         print("---------------------------------------")
+    #         print("--Rendimiento del modelo-Kfold=", (k), "--")
+    #         print("----------------------------------------")
+    #         print(f"Accuracy test: {np.round(ac*100.0,2)}%")
+    #         print("---------------------------------------")
+
+    #         print("---------------------------------------")
+    #         print("-------matriz de confusión-------------")
+    #         print("---------------------------------------")
+
+    #         # Matriz de confusion
+    #         cm = confusion_matrix(pred, y)
+
+    #         # Para ver el numero de targets
+    #         tar = np.unique(y, return_counts=True)
+    #         targ = np.array(tar[0])
+    #         ncat = len(targ)
+    #         # ncat = int(input('How many classes are you going to predict='))
+
+    #         b = listofzeros = [0] * ncat
+    #         for i in range(ncat):
+    #             b[i] = i
+
+    #         cm_test = pd.DataFrame(cm, index=[i for i in b], columns=[i for i in b])
+    #         plt.figure(figsize=(10, 7))
+    #         sns.set(font_scale=1)
+    #         sns.heatmap(
+    #             cm_test, annot=True, cmap=plt.cm.Reds, fmt="d"
+    #         )  # color azul cmap="YlGnBu"
+    #         plt.title(f"Confusion Matrix - Test (K-fold {k})")
+    #         plt.ylabel("Classes")
+    #         # Save the confusion matrix plot instead of displaying it
+    #         plt.savefig(f"{cv_plots_folder}confusion_matrix_kfold_{k}.png")
+    #         plt.close()
+
+    #     return ac
