@@ -408,6 +408,8 @@ class BaseOptimizer:
             if run == 0:
                 best_model = Rn.layersObject
                 acc_ini = running_acc().data
+                best_acc = acc_ini  # Initialize best_acc with initial accuracy
+                ep = 0  # Also initialize ep to avoid similar issues
             else:
                 if running_acc().data >= acc_ini:
                     ep = run

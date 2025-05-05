@@ -348,7 +348,7 @@ class RedNeuBay(object):
 
     def cv_train(
         self, df_cla=False, X_cla=False, Y_cla=False, train_set=False, test_set=False
-    ):  # ojo revisar como ingresar
+    ):
         """
         Funcion para el entrenamiento de la red.
         :xy: training - archivo en formato Dataloader (1 solo archivo con inputs y targets)
@@ -357,8 +357,36 @@ class RedNeuBay(object):
         :retorna: Valores de Loss y accuracy en cada epoch
         """
 
-        # Primero toma los datos y los divide en entrenamiento y test (solo en datos normales) y en imagenes se debe ingresar
-        # la base de entrenamiento y test. Además en los dos casos hace el batch size
+        # Clear previous fold results from results.json
+        try:
+            results_path = os.path.join(outuput_folder, "results.json")
+
+            if os.path.exists(results_path):
+                with open(results_path, "r") as f:
+                    results = json.load(f)
+
+                # Clear previous fold results
+                if "fold_accuracies" in results:
+                    results["fold_accuracies"] = {}
+
+                # Also clear fold-specific class frequencies if they exist
+                if "class_frequency" in results:
+                    # Keep only non-fold entries
+                    filtered_class_freq = {
+                        k: v
+                        for k, v in results["class_frequency"].items()
+                        if not k.startswith("cv_fold_")
+                    }
+                    results["class_frequency"] = filtered_class_freq
+
+                # Write the cleared results back
+                with open(results_path, "w") as f:
+                    json.dump(results, f, indent=4)
+
+        except Exception as e:
+            print(f"Warning: Could not clear previous CV results: {e}")
+
+        # Existing code continues here
         if self.image == True:
             train_loader, X_test, Y_test = trat_Imag(
                 train_set=train_set,
