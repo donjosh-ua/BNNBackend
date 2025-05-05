@@ -201,10 +201,25 @@ class SGD(BaseOptimizer):
 
 class RMSProp(BaseOptimizer):
 
-    def __init__(self, learning_rate, decay, momentum):
-        BaseOptimizer.__init__(self, learning_rate, decay, momentum)
+    def __init__(self, learning_rate, decay, momentum, Bay, img, image_size):
+        BaseOptimizer.__init__(
+            self, learning_rate, decay, momentum, Bay, img, image_size
+        )
 
-    def update_weights(self, delta, layer_input, layer_index, curr_weights, Lambda):
+    def update_weights(
+        self,
+        delta,
+        layer_input,
+        layer_index,
+        curr_weights,
+        Lambda,
+        Bay,
+        img,
+        image_size,
+        ite_act,
+        total,
+        acbay,
+    ):
         gradient = np.dot(layer_input.T, delta) - Lambda * curr_weights
 
         eps = 1e-8
@@ -220,17 +235,46 @@ class RMSProp(BaseOptimizer):
 
 class Adam(BaseOptimizer):
 
-    def __init__(self, learning_rate, decay, momentum):
-        BaseOptimizer.__init__(self, learning_rate, decay, momentum)
+    def __init__(self, learning_rate, decay, momentum, Bay, img, image_size):
+        BaseOptimizer.__init__(
+            self, learning_rate, decay, momentum, Bay, img, image_size
+        )
         self.beta1 = 0.9
         self.beta2 = 0.99
         self._smooth_gradients = {}
 
     def set_smooth_gradients(self, nn):
-        for i in range(len(nn._layersObject)):
-            self._smooth_gradients[i] = 0
+        # If nn is already a defaultdict (this is what's happening in your case)
+        if isinstance(nn, dict) or hasattr(nn, "items"):
+            for i in range(len(nn)):
+                self._smooth_gradients[i] = 0
+        # If nn is a RedNeuBay instance with a layersObject attribute
+        elif hasattr(nn, "layersObject"):
+            for i in range(len(nn.layersObject)):
+                self._smooth_gradients[i] = 0
+        # For any other iterable
+        elif hasattr(nn, "__len__"):
+            for i in range(len(nn)):
+                self._smooth_gradients[i] = 0
+        else:
+            raise TypeError(
+                "Expected nn to be iterable or have a layersObject attribute"
+            )
 
-    def update_weights(self, delta, layer_input, layer_index, curr_weights, Lambda):
+    def update_weights(
+        self,
+        delta,
+        layer_input,
+        layer_index,
+        curr_weights,
+        Lambda,
+        Bay,
+        img,
+        image_size,
+        ite_act,
+        total,
+        acbay,
+    ):
         gradient = torch.matmul(layer_input.T, delta)  # - Lambda * curr_weights
 
         eps = 1e-8
@@ -250,10 +294,25 @@ class Adam(BaseOptimizer):
 
 class Nesterov(BaseOptimizer):
 
-    def __init__(self, learning_rate, decay, momentum):
-        BaseOptimizer.__init__(self, learning_rate, decay, momentum)
+    def __init__(self, learning_rate, decay, momentum, Bay, img, image_size):
+        BaseOptimizer.__init__(
+            self, learning_rate, decay, momentum, Bay, img, image_size
+        )
 
-    def update_weights(self, delta, layer_input, layer_index, curr_weights, Lambda):
+    def update_weights(
+        self,
+        delta,
+        layer_input,
+        layer_index,
+        curr_weights,
+        Lambda,
+        Bay,
+        img,
+        image_size,
+        ite_act,
+        total,
+        acbay,
+    ):
 
         gradient = torch.matmul(layer_input.T, delta)  # - Lambda * curr_weights
 
@@ -281,10 +340,25 @@ class Nesterov(BaseOptimizer):
 
 class Adagrad(BaseOptimizer):
 
-    def __init__(self, learning_rate, decay, momentum):
-        BaseOptimizer.__init__(self, learning_rate, decay, momentum)
+    def __init__(self, learning_rate, decay, momentum, Bay, img, image_size):
+        BaseOptimizer.__init__(
+            self, learning_rate, decay, momentum, Bay, img, image_size
+        )
 
-    def update_weights(self, delta, layer_input, layer_index, curr_weights, Lambda):
+    def update_weights(
+        self,
+        delta,
+        layer_input,
+        layer_index,
+        curr_weights,
+        Lambda,
+        Bay,
+        img,
+        image_size,
+        ite_act,
+        total,
+        acbay,
+    ):
 
         eps = 1e-8
 

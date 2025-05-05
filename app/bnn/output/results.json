@@ -1,49 +1,49 @@
 {
-  "accuracy": 63.38,
-  "epoch": 7,
-  "overall_class_frequency": {
-    "class_0": 500,
-    "class_1": 268
-  },
-  "image_class_frequency": {
-    "class_0": 5923,
-    "class_1": 6742,
-    "class_2": 5958,
-    "class_3": 6131,
-    "class_4": 5842,
-    "class_5": 5421,
-    "class_6": 5918,
-    "class_7": 6265,
-    "class_8": 5851,
-    "class_9": 5949
-  },
-  "class_frequency": {
-    "cv_fold_1": {
-      "class_0": 400,
-      "class_1": 215
+    "accuracy": 62.630001068115234,
+    "epoch": 1,
+    "overall_class_frequency": {
+        "class_0": 500,
+        "class_1": 268
     },
-    "cv_fold_2": {
-      "class_0": 394,
-      "class_1": 221
+    "image_class_frequency": {
+        "class_0": 5923,
+        "class_1": 6742,
+        "class_2": 5958,
+        "class_3": 6131,
+        "class_4": 5842,
+        "class_5": 5421,
+        "class_6": 5918,
+        "class_7": 6265,
+        "class_8": 5851,
+        "class_9": 5949
     },
-    "cv_fold_3": {
-      "class_0": 397,
-      "class_1": 218
+    "class_frequency": {
+        "cv_fold_1": {
+            "class_0": 401,
+            "class_1": 214
+        },
+        "cv_fold_2": {
+            "class_0": 390,
+            "class_1": 225
+        },
+        "cv_fold_3": {
+            "class_0": 405,
+            "class_1": 210
+        },
+        "cv_fold_4": {
+            "class_0": 401,
+            "class_1": 214
+        },
+        "cv_fold_5": {
+            "class_0": 403,
+            "class_1": 210
+        }
     },
-    "cv_fold_4": {
-      "class_0": 400,
-      "class_1": 215
-    },
-    "cv_fold_5": {
-      "class_0": 410,
-      "class_1": 203
+    "fold_accuracies": {
+        "fold_1": 67.31999969482422,
+        "fold_2": 71.9000015258789,
+        "fold_3": 62.09000015258789,
+        "fold_4": 64.70999908447266,
+        "fold_5": 62.58000183105469
     }
-  },
-  "fold_accuracies": {
-    "fold_1": 66.01000213623047,
-    "fold_2": 64.70999908447266,
-    "fold_3": 67.31999969482422,
-    "fold_4": 60.130001068115234,
-    "fold_5": 58.709999084472656
-  }
 }
