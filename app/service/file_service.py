@@ -79,12 +79,15 @@ class FileService:
             dataset_path = file_path
         else:
             # Regular file validation
-            dataset_path = (
-                os.path.join("./app", file_path)
-                if not file_path.startswith("./app")
-                else file_path
-            )
-            if not os.path.isfile(dataset_path):
+            # Always use forward slashes for cross-platform compatibility in JSON
+            if not file_path.startswith("./app"):
+                dataset_path = ("./app/" + file_path.lstrip("/")).replace("\\", "/")
+            else:
+                dataset_path = file_path.replace("\\", "/")
+
+            # Convert to OS-specific path for file check only
+            os_specific_path = os.path.normpath(dataset_path)
+            if not os.path.isfile(os_specific_path):
                 raise FileNotFoundError(f"File not found: {file_path}")
 
         # Update settings in proper JSON format
