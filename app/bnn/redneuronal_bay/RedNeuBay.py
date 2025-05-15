@@ -304,7 +304,7 @@ class RedNeuBay(object):
             print("---------------------------------------")
 
             # Guardar resultados para analizar con librera de metricas diseñada
-            # name_res = input("With what name do you want to save results: ")
+            name_res = "resultados_" + self.save_mod
             name_res = name_res + ".csv"
             resultados = {"True": y, "Predicted": pred}
             resultados = pd.DataFrame(

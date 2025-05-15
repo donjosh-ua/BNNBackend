@@ -220,16 +220,19 @@ class RMSProp(BaseOptimizer):
         total,
         acbay,
     ):
-        gradient = np.dot(layer_input.T, delta) - Lambda * curr_weights
+        # Use PyTorch operations instead of NumPy
+        gradient = torch.matmul(layer_input.T, delta)
+        if Lambda > 0:
+            gradient = gradient - Lambda * curr_weights
 
         eps = 1e-8
 
         self._gradients[layer_index] = self.decay * self._gradients[layer_index] + (
             1 - self.decay
-        ) * np.power(gradient, 2)
+        ) * torch.pow(gradient, 2)
 
         return curr_weights - self.learning_rate * gradient / (
-            np.sqrt(self._gradients[layer_index]) + eps
+            torch.sqrt(self._gradients[layer_index]) + eps
         )
 
 
@@ -316,11 +319,17 @@ class Nesterov(BaseOptimizer):
 
         gradient = torch.matmul(layer_input.T, delta)  # - Lambda * curr_weights
 
-        prev_velocity = copy.copy.self._gradients[layer_index]
+        # This line has the error - copy.copy is a function, not an object with a 'self' attribute
+        prev_velocity = copy.copy(
+            self._gradients[layer_index]
+        )  # Fixed: changed from copy.copy.self
 
         new_velocity = torch.mul(
             self.momentum, self._gradients[layer_index]
         ) - torch.mul(self.learning_rate, gradient)
+
+        # Store the new velocity for next iteration
+        self._gradients[layer_index] = new_velocity
 
         return (
             curr_weights

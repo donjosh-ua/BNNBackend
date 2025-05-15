@@ -179,6 +179,7 @@ def train(
         # Set parameters specific to MNIST
         image = True
         image_size = 784  # 28x28 images
+        batch_size = 256
         cv = False  # MNIST doesn't use cross-validation
 
         # Set up MNIST dataset

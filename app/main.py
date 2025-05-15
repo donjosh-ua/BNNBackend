@@ -30,7 +30,3 @@ app.include_router(file_controller.router, prefix="/files", tags=["Files"])
 @app.get("/", tags=["root"])
 def root():
     return {"message": "Bienvenido a la API de BNN con FastAPI"}
-
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
