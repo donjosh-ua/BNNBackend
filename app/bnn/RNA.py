@@ -146,6 +146,7 @@ def train(
     cv=True,
     Kfold=5,
     layers=None,
+    **kwargs,
 ):
     """
     Entrenamiento de la red neuronal

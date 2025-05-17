@@ -19,31 +19,31 @@
     },
     "class_frequency": {
         "cv_fold_1": {
-            "class_0": 400,
-            "class_1": 215
+            "class_0": 402,
+            "class_1": 213
         },
         "cv_fold_2": {
             "class_0": 394,
             "class_1": 221
         },
         "cv_fold_3": {
-            "class_0": 397,
-            "class_1": 218
+            "class_0": 414,
+            "class_1": 201
         },
         "cv_fold_4": {
-            "class_0": 400,
-            "class_1": 215
+            "class_0": 399,
+            "class_1": 216
         },
         "cv_fold_5": {
-            "class_0": 410,
-            "class_1": 203
+            "class_0": 392,
+            "class_1": 221
         }
     },
     "fold_accuracies": {
-        "fold_1": 64.05,
-        "fold_2": 69.28,
-        "fold_3": 66.67,
-        "fold_4": 65.36,
-        "fold_5": 58.71
+        "fold_1": 62.09000015258789,
+        "fold_2": 67.31999969482422,
+        "fold_3": 56.209999084472656,
+        "fold_4": 62.75,
+        "fold_5": 63.869998931884766
     }
 }

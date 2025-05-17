@@ -9,6 +9,21 @@ import base64
 router = APIRouter()
 
 
+class BayesianConfig(BaseModel):
+    distribution_type: str = Field(
+        default="normal", description="Type of prior distribution"
+    )
+    mean: float = Field(default=0, description="Mean of the distribution")
+    sigma: float = Field(default=1, description="Standard deviation or scale parameter")
+    alpha: float = Field(
+        default=0.1, description="Alpha parameter for the distribution"
+    )
+    beta: float = Field(default=0.1, description="Beta parameter for the distribution")
+    lambdaPar: float = Field(
+        default=0.1, description="Lambda parameter for the distribution"
+    )
+
+
 class NeuralNetworkParameters(BaseModel):
     alpha: float = Field(default=0.001, description="Learning rate")
     epoch: int = Field(default=20, description="Number of training epochs")
@@ -23,6 +38,9 @@ class NeuralNetworkParameters(BaseModel):
         default=None, description="External activation function"
     )
     useBayesian: bool = Field(default=False, description="Use Bayesian neural network")
+    bayesian_config: Optional[BayesianConfig] = Field(
+        default=None, description="Configuration for Bayesian priors"
+    )
     save_mod: str = Field(default="ModiR", description="Model save name")
     pred_hot: bool = Field(default=True, description="Use one-hot prediction")
     test_size: float = Field(default=0.2, description="Test set ratio")
@@ -62,6 +80,15 @@ def save_parameters_to_conf(params: dict):
                     formatted_value = f'[{", ".join(layer_items)}]'
                 else:
                     formatted_value = str(value).replace("'", "")
+            elif isinstance(value, dict):
+                # Handle nested dictionaries (like bayesian_config)
+                formatted_items = []
+                for k, v in value.items():
+                    if isinstance(v, str):
+                        formatted_items.append(f'"{k}": "{v}"')
+                    else:
+                        formatted_items.append(f'"{k}": {v}')
+                formatted_value = "{" + ", ".join(formatted_items) + "}"
             else:
                 formatted_value = str(value)
 
@@ -198,14 +225,37 @@ async def train_rna(params: NeuralNetworkParameters):
     También se guardan en el archivo de configuración para uso futuro.
     """
     try:
-        # Convert Pydantic model to dictionary and rename useBayesian to Bay to match API
+        # Convert Pydantic model to dictionary
         train_params = params.model_dump()
+
+        # Extract bayesian config if available
+        bayesian_config = train_params.pop("bayesian_config", None)
 
         # Rename parameters for the train function
         train_params["Bay"] = train_params.pop("useBayesian")
         train_params["Kfold"] = train_params.pop("numFolds")
 
-        save_parameters_to_conf(train_params)
+        # Save the full config (including bayesian_config) to the conf file
+        save_parameters = train_params.copy()
+        if bayesian_config:
+            save_parameters["bayesian_config"] = bayesian_config
+        save_parameters_to_conf(save_parameters)
+
+        # Add individual bayesian parameters to train_params if bayesian_config exists
+        if bayesian_config:
+            # Convert the BayesianConfig model to a dictionary if it's not already
+            if not isinstance(bayesian_config, dict):
+                bayesian_config = bayesian_config.dict()
+
+            # Add each parameter individually
+            train_params["distribution_type"] = bayesian_config.get(
+                "distribution_type", "normal"
+            )
+            train_params["mean"] = bayesian_config.get("mean", 0.0)
+            train_params["sigma"] = bayesian_config.get("sigma", 1.1)
+            train_params["alpha"] = bayesian_config.get("alpha", 0.1)
+            train_params["beta"] = bayesian_config.get("beta", 0.1)
+            train_params["lambdaPar"] = bayesian_config.get("lambdaPar", 0.1)
 
         # Call the train function with the parameters (including layers)
         train(**train_params)
