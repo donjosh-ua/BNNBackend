@@ -659,6 +659,33 @@ class BaseOptimizer:
         ):  # Para que haga el bayesiano en el ultimo batch de cada epoch
 
             try:
+                from app.config import conf_manager
+
+                # Get bayesian_config directly from nn_parameters.conf
+                nn_params = conf_manager.get_value("nn_parameters")
+
+                # Check if bayesian_config exists in nn_params
+                if nn_params and "bayesian_config" in nn_params:
+                    bayesian_config = nn_params["bayesian_config"]
+                else:
+                    # Fall back to standard configuration
+                    bayesian_config = {
+                        "distribution_type": "normal",
+                        "mean": 0.0,
+                        "sigma": 1.0,
+                        "alpha": 0.1,
+                        "beta": 0.1,
+                        "lambdaPar": 0.1,
+                    }
+
+                # Extract parameters with defaults
+                distribution_type = bayesian_config.get("distribution_type", "normal")
+                prior_mean = bayesian_config.get("mean", 0.0)
+                prior_sigma = bayesian_config.get("sigma", 1.0)
+                prior_alpha = bayesian_config.get("alpha", 0.1)
+                prior_beta = bayesian_config.get("beta", 0.1)
+                prior_lambda = bayesian_config.get("lambdaPar", 1.0)
+
                 # --------------------------------------------
                 # Para que no presente en consola el proceso
                 logger = logging.getLogger("pymc")
@@ -679,14 +706,51 @@ class BaseOptimizer:
                     # Generate a simple model ID
                     model_id = f"b{layer_index}_{np.random.randint(10000)}"
 
-                    # Defino priors con nombres simplificados
-                    delt_b = pm.Normal(
-                        f"db_{model_id}",
-                        mu=delta_numpy,
-                        sigma=0.01,
-                        shape=delta_numpy.shape,
-                    )
-                    sd_b = pm.Uniform(f"sd_{model_id}", 0, 100)
+                    # Choose prior distribution based on distribution_type
+                    if distribution_type == "normal":
+                        delt_b = pm.Normal(
+                            f"db_{model_id}",
+                            mu=prior_mean + delta_numpy,
+                            sigma=prior_sigma,
+                            shape=delta_numpy.shape,
+                        )
+                    elif distribution_type == "halfnormal":
+                        # HalfNormal has no location parameter, only scale
+                        delt_b = pm.HalfNormal(
+                            f"db_{model_id}",
+                            sigma=prior_sigma,
+                            shape=delta_numpy.shape,
+                        )
+                        # We add the delta_numpy after sampling
+                        delt_b = delt_b + delta_numpy + prior_mean
+                    elif distribution_type == "exponential":
+                        # Exponential has no location parameter
+                        delt_b = pm.Exponential(
+                            f"db_{model_id}",
+                            lam=1
+                            / prior_lambda,  # Convert sigma to lambda rate parameter
+                            shape=delta_numpy.shape,
+                        )
+                        # We add the delta_numpy and mean after sampling
+                        delt_b = delt_b + delta_numpy + prior_mean
+                    elif distribution_type == "cauchy":
+                        delt_b = pm.Cauchy(
+                            f"db_{model_id}",
+                            alpha=prior_alpha + delta_numpy,  # Location
+                            beta=prior_beta,  # Scale
+                            shape=delta_numpy.shape,
+                        )
+                    else:
+                        # Default to normal if unknown
+                        delt_b = pm.Normal(
+                            f"db_{model_id}",
+                            mu=delta_numpy,
+                            sigma=0.01,
+                            shape=delta_numpy.shape,
+                        )
+
+                    # Standard deviation for observation noise
+                    sd_b = pm.HalfNormal(f"sd_{model_id}", sigma=10.0)
 
                     # Use PyTensor's sum with the correct syntax
                     delta_b = pm.Deterministic(
@@ -731,6 +795,97 @@ class BaseOptimizer:
         # Update bias with gradient
         new_bias = curr_bias - self.learning_rate * gradient
         return new_bias
+
+    # def update_bias(
+    #     self, delta, curr_bias, Bay, img, ite_act, total, layer_index, acbay
+    # ):
+    #     """
+    #     Al ser una funcion abstracta se divide para cada clase derivada
+    #     :delta:
+    #     :curr_bias: current bias of layer.
+    #     :regreso: Sesgos actualizados
+    #     """
+    #     # --------Proceso bayesiano-------------------------------------------------------
+    #     img = self.img
+
+    #     # if Bay==True: # Para que haga el bayesiano en cada batch de cada epoch
+    #     if (
+    #         Bay == True and ite_act == (total - 1) and acbay == 1
+    #     ):  # Para que haga el bayesiano en el ultimo batch de cada epoch
+
+    #         try:
+    #             # --------------------------------------------
+    #             # Para que no presente en consola el proceso
+    #             logger = logging.getLogger("pymc")
+    #             logger.setLevel(logging.CRITICAL)
+    #             # --------------------------------------------
+
+    #             # Analisis Bayesiano----------------------------------------------------------
+    #             delta_numpy = delta.data.numpy()
+
+    #             # Para hacer que el tunning varie por capas mas numerosas
+    #             tunb = 10
+
+    #             # Compute the summed_delta outside of PyMC model
+    #             summed_delta_numpy = np.sum(delta_numpy, axis=0, keepdims=True)
+
+    #             # Clear PyMC cache between runs
+    #             with pm.Model() as model:
+    #                 # Generate a simple model ID
+    #                 model_id = f"b{layer_index}_{np.random.randint(10000)}"
+
+    #                 # Defino priors con nombres simplificados
+    #                 delt_b = pm.Normal(
+    #                     f"db_{model_id}",
+    #                     mu=delta_numpy,
+    #                     sigma=0.01,
+    #                     shape=delta_numpy.shape,
+    #                 )
+    #                 sd_b = pm.Uniform(f"sd_{model_id}", 0, 100)
+
+    #                 # Use PyTensor's sum with the correct syntax
+    #                 delta_b = pm.Deterministic(
+    #                     f"delta_{model_id}", tt.sum(delt_b, axis=0)
+    #                 )
+
+    #                 # Define likelihood using precomputed summed_delta
+    #                 obs_pos_b = pm.Normal(
+    #                     f"obs_{model_id}",
+    #                     mu=delta_b,
+    #                     sigma=sd_b,
+    #                     observed=summed_delta_numpy,
+    #                 )
+
+    #                 # Elijo el modelo y obtengo muestras
+    #                 step = pm.NUTS()
+    #                 trace = pm.sample(
+    #                     5,
+    #                     step=step,
+    #                     tune=tunb,
+    #                     cores=1,
+    #                     chains=1,
+    #                     compute_convergence_checks=False,
+    #                     progressbar=True,
+    #                 )
+
+    #                 # Extract the mean directly inside the context manager
+    #                 db_values = trace[f"delta_{model_id}"]
+    #                 db_mean = db_values.mean(axis=0)
+
+    #             # Convert back to PyTorch Variable outside the context
+    #             db = Variable(torch.FloatTensor(db_mean), requires_grad=True)
+    #             gradient = db
+
+    #         except Exception as e:
+    #             # Fallback to standard gradient if Bayesian update fails
+    #             print(f"Bayesian update failed, using standard gradient: {str(e)}")
+    #             gradient = torch.sum(delta, dim=0, keepdim=True)
+    #     else:
+    #         gradient = torch.sum(delta, dim=0, keepdim=True)
+
+    #     # Update bias with gradient
+    #     new_bias = curr_bias - self.learning_rate * gradient
+    #     return new_bias
 
     def calculate_delta(self, derivative, loss):
         """

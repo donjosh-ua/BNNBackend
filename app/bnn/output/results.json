@@ -1,6 +1,6 @@
 {
-    "accuracy": 66.44999694824219,
-    "epoch": 9,
+    "accuracy": 67.75,
+    "epoch": 38,
     "overall_class_frequency": {
         "class_0": 500,
         "class_1": 268
