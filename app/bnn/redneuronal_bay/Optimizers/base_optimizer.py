@@ -122,7 +122,6 @@ class BaseOptimizer:
 
     def backprop(self, xy, Rn, save_mod, verbose, cv, k):
 
-        # name_model = input("With what name do you want to save the model: ")
         name_model = save_mod
 
         # Para que trabaje si tengo cuda osea GPU
@@ -651,98 +650,86 @@ class BaseOptimizer:
         :curr_bias: current bias of layer.
         :regreso: Sesgos actualizados
         """
-        # delta = np.asarray(delta)
-
         # --------Proceso bayesiano-------------------------------------------------------
         img = self.img
-        # np.random.seed()
 
         # if Bay==True: # Para que haga el bayesiano en cada batch de cada epoch
         if (
             Bay == True and ite_act == (total - 1) and acbay == 1
         ):  # Para que haga el bayesiano en el ultimo batch de cada epoch
 
-            # --------------------------------------------
-            # Para que no presente en consola el proceso
-            logger = logging.getLogger("pymc3")
-            # logger.propagate = False
-            logger.setLevel(logging.CRITICAL)
-            # --------------------------------------------
+            try:
+                # --------------------------------------------
+                # Para que no presente en consola el proceso
+                logger = logging.getLogger("pymc")
+                logger.setLevel(logging.CRITICAL)
+                # --------------------------------------------
 
-            # Analisis Bayesiano----------------------------------------------------------
+                # Analisis Bayesiano----------------------------------------------------------
+                delta_numpy = delta.data.numpy()
 
-            delta = delta.data.numpy()
+                # Para hacer que el tunning varie por capas mas numerosas
+                tunb = 10
 
-            # Para hacer que el tunning varie por capas mas numerosas
-            mues = layer_index  # es el numero de capa
-            tunb = 10
+                # Compute the summed_delta outside of PyMC model
+                summed_delta_numpy = np.sum(delta_numpy, axis=0, keepdims=True)
 
-            # paraloizado al momento por acbay---------------------------------
-            # if img==True:
-            #    if mues==1:
-            #        tun = 200
-            #    elif mues==0:
-            #        tun= 100
-            #    else:
-            #        tun = 300
-            # ------------------------------------------------------------------
+                # Clear PyMC cache between runs
+                with pm.Model() as model:
+                    # Generate a simple model ID
+                    model_id = f"b{layer_index}_{np.random.randint(10000)}"
 
-            with pm.Model() as NNBb:
-                # Defino priors
+                    # Defino priors con nombres simplificados
+                    delt_b = pm.Normal(
+                        f"db_{model_id}",
+                        mu=delta_numpy,
+                        sigma=0.01,
+                        shape=delta_numpy.shape,
+                    )
+                    sd_b = pm.Uniform(f"sd_{model_id}", 0, 100)
 
-                # sd_b = pm.HalfNormal('sd_b', sigma=1)
-                delt_b = pm.Normal("delt_b", mu=delta, sigma=0.01, shape=delta.shape)
-                sd_b = pm.Uniform("sd_b", 0, 100)
+                    # Use PyTensor's sum with the correct syntax
+                    delta_b = pm.Deterministic(
+                        f"delta_{model_id}", tt.sum(delt_b, axis=0)
+                    )
 
-                # Defino valores en funcion de las priors
-                delta_b = pm.Deterministic(
-                    "delta_b", (tt.sum(delt_b, axis=0, keepdims=True))
-                )
-                # --delta_b = tt.sum(delta, axis=0, keepdims=True)
+                    # Define likelihood using precomputed summed_delta
+                    obs_pos_b = pm.Normal(
+                        f"obs_{model_id}",
+                        mu=delta_b,
+                        sigma=sd_b,
+                        observed=summed_delta_numpy,
+                    )
 
-                # Defino likelihood en funcion de los valores establecidos y priors
-                obs_pos_b = pm.Normal(
-                    "obs_pos_b", mu=delta_b, sigma=sd_b, observed=delta_b
-                )
-                # obs_pos = pm.Normal('obs_pos', mu=delta_w, sigma=sd,observed=delta_w)
-                # obs_pos = pm.Normal('obs_pos', mu=delta_w, sigma=sd,observed=False)
+                    # Elijo el modelo y obtengo muestras
+                    step = pm.NUTS()
+                    trace = pm.sample(
+                        5,
+                        step=step,
+                        tune=tunb,
+                        cores=1,
+                        chains=1,
+                        compute_convergence_checks=False,
+                        progressbar=True,
+                    )
 
-                # Elijo el modelo
-                # --start = pm.find_MAP() # esta opcion permite que encuentre los valores iniciales para optimizacion
-                # step = pm.NUTS(target_accept=.95)
-                # step = pm.HamiltonianMC()
-                # --step = pm.NUTS(state=start)
-                step = pm.NUTS()
-                # Obtengo las muestras posteriores
-                # trace = pm.sample(500, step=step, tune=2500, cores=1, chains=1, compute_convergence_checks=True, progressbar=True,  random_seed=42)
-                # trace = pm.sample(500, step=step, tune=400, cores=2, chains=2, compute_convergence_checks=False, progressbar=True)
-                trace = pm.sample(
-                    5,
-                    step=step,
-                    tune=tunb,
-                    cores=4,
-                    chains=1,
-                    compute_convergence_checks=False,
-                    progressbar=True,
-                )
+                    # Extract the mean directly inside the context manager
+                    db_values = trace[f"delta_{model_id}"]
+                    db_mean = db_values.mean(axis=0)
 
-            db = trace["delta_b"]
-            db = db.mean(axis=0)
+                # Convert back to PyTorch Variable outside the context
+                db = Variable(torch.FloatTensor(db_mean), requires_grad=True)
+                gradient = db
 
-            # -------------------------------------------------------------------------------
-
-            db = Variable(torch.FloatTensor(db), requires_grad=True)
-            gradient = db  # - Lambda * curr_weights
-            # ------------------------------------------------------------------------------
-
+            except Exception as e:
+                # Fallback to standard gradient if Bayesian update fails
+                print(f"Bayesian update failed, using standard gradient: {str(e)}")
+                gradient = torch.sum(delta, dim=0, keepdim=True)
         else:
             gradient = torch.sum(delta, dim=0, keepdim=True)
 
-        # -----------------------------------------------------------
-
-        # gradient = torch.sum(delta, dim=0, keepdim=True)
+        # Update bias with gradient
         new_bias = curr_bias - self.learning_rate * gradient
-        pass
         return new_bias
 
     def calculate_delta(self, derivative, loss):

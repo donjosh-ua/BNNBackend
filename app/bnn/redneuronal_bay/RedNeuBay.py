@@ -240,7 +240,7 @@ class RedNeuBay(object):
             if self.image == True and X_test == 0:
                 print("")
             else:
-                # nam_test = input("With what name do you want to save data test: ")
+                nam_test = "test_" + self.save_mod
                 nam_test = nam_test + ".csv"
                 # print(X_test.shape)
                 # print(Y_test.shape)
