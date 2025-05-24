@@ -20,10 +20,9 @@ base_dir = os.path.dirname(
     )
 )
 output_folder = os.path.join(base_dir, "app", "bnn", "output") + os.path.sep
-# Path for saving plots
 plots_folder = os.path.join(base_dir, "app", "data", "plots") + os.path.sep
 cv_plots_folder = os.path.join(plots_folder, "cv") + os.path.sep
-# Ensure the directories exist
+
 os.makedirs(output_folder, exist_ok=True)
 os.makedirs(plots_folder, exist_ok=True)
 os.makedirs(cv_plots_folder, exist_ok=True)
@@ -66,46 +65,21 @@ class BaseOptimizer:
 
         if self.img == True:
             enput = x.view(-1, self.image_size)
-            # print('despues de aplanado',enput.shape)
         else:
             enput = x
-
-        # print(f'El numero de instancias son: {len(x)}')
-        # print(f'El tamaño de entrada es {x.shape}')
 
         for i in range(len(Rn.layersObject)):
 
             layer = Rn.layersObject[i]
 
-            ##print(f'Tamaño de pesos de capa {i}: {layer.weights.shape}')
-            # print(input)
-            # print(input.shape)
-            # print(input.type)
-            # print(input.dtype)
-            # print(layer.weights)
-            ##print(f'Tamaño de sesgos de capa {i}: {layer.bias.shape}')
-            # print(i)
-            # print(layer.weights.shape)
-            # print(layer.weights.dtype)
-            # print(layer.bias)
-            # print(layer.bias.shape)
-            # print(layer.bias.dtype)
-            # print('Salida:',i)
-            # print(layer.weights.dtype)
             a = 0
             if Rn.epoch == (run + 1):
                 a = 1
-            # print('capa=',i)
-            # print('entrada de x=',enput.shape,'Entrada de pesos',layer.weights.shape, 'entrada de sesgos',layer.bias.shape)
+
             Output = layer.funcion_activacion(
                 torch.add(torch.matmul(enput, layer.weights), layer.bias), a
             )
             Output = Variable(torch.FloatTensor(Output), requires_grad=True)
-            ##print(Output)
-            # Output = layer.funcion_activacion(np.add(np.dot(input, layer.weights), layer.bias))
-            # print (f'Salida de la capa {i}: {Output.shape}')
-            # print(Output)
-
             if trace == True:
                 if i == len(Rn.layersObject) - 1:
                     outputs.append((enput, Output))
@@ -168,19 +142,10 @@ class BaseOptimizer:
 
         self.set_smooth_gradients(Rn.layersObject)
 
-        # y_real = copy.copy(y)
-
-        # if Rn.layersObject[Rn.layernum].output_dim != 1:
-        #    y = cambia_labels(y) -- ya no lo necesito pues lo hago en formato dataloader
-
         "----------------------------------------------------------"
         "Genera lotes de datos dependiendo del tamaño del lote."
         "----------------------------------------------------------"
 
-        # batches = genera_batches(x.shape[0], batch_size=Rn.batch_size)
-        # num_batches = len(batches)
-        # print(batches[0,:])
-        # print(f'batches es: {len(batches)} La dimensiones es: {batches.shape}')
         loss_b = np.array([])  # guarada la perdida en cada iteración
         loss_b2 = np.array([])
         ac_b = np.array([])
@@ -214,23 +179,6 @@ class BaseOptimizer:
 
                 each_layer_output = self._forwardprop(Rn, x, run)
 
-                ##print('Termino el forward propagation')
-                # print(f'Tamaño final de salida: {len(each_layer_output)}')
-
-                # print(type(each_layer_output))
-                # print((each_layer_output[0]))
-                # print((each_layer_output[0][0]).shape)
-                # print((each_layer_output[1]))
-                # print((each_layer_output[1][0]).shape)
-                # print((each_layer_output[2]))
-                # print((each_layer_output[2][0]).shape)
-                # print((each_layer_output[3]))
-                # print((each_layer_output[3][0]).shape)
-                # print((each_layer_output[4]))
-                # print((each_layer_output[4][0]).shape)
-                # print((each_layer_output[4][1]))
-                # print((each_layer_output[4][1]).shape)
-
                 reversedlayers = list(range(len(Rn.layersObject))[::-1])
                 # print(reversedlayers)
                 outputlayerindex = reversedlayers[0]
@@ -239,25 +187,11 @@ class BaseOptimizer:
                 for i in reversedlayers:
 
                     if i == outputlayerindex:
-                        # print((Rn.layersObject[i].derivative(each_layer_output[i][1]).shape))
-                        # print(ytrain)
-                        # print(ytrain.shape)
-                        # print(ytrain.dtype)
-                        # print(each_layer_output[i][1])
-                        # print((each_layer_output[i][1]).shape)
-                        # print((each_layer_output[i][1]).dtype)
-                        # print(Rn.criteria(ytrain, each_layer_output[i][1]).shape)
-
-                        ##print('inicia loss y  gradientes')
 
                         actbay = 1  # Nuevo
 
                         ent = Variable(each_layer_output[i][1], requires_grad=True)
 
-                        # ent = each_layer_output[i][1]
-                        ##print('salida')
-                        ##print(ent)
-                        ##print(ent.dtype)
                         layerout, targ = ent, y
 
                         F_sigmoide = 0
@@ -269,84 +203,34 @@ class BaseOptimizer:
 
                         ac1 = torch.sum(pred == targ)
                         ac = torch.sum(pred == targ).float() / n_total_row
-                        # ac_b = np.append(ac_b,np.round(np.asscalar(ac),4)) # Para graficar funcion de perdida
                         ac_b = np.append(ac_b, ac)  # Para graficar funcion de accuracy
-                        # print(ac1)
-                        # print('accuarcy =', ac)
 
                         Losgr = Rn.criteria(targ, layerout)
 
                         Losgr.backward()
-                        # loss_b = np.append(loss_b,np.round(np.asscalar(Losgr.data),4)) #Para graficar funcion de perdida
-                        # loss_b = np.append(loss_b,(Losgr.data))
                         loss_b = np.append(
                             loss_b, (Losgr.data / num_batches)
                         )  # Para graficar funcion de perdida
-
-                        # iteraciones += 1
 
                         running_loss.update(Losgr * n_total_row, n_total_row)
                         running_acc.update(
                             ac1.float(), n_total_row
                         )  # Actualizacion y casteo a flotante
 
-                        # print('Loss=', Losgr.data)
-
-                        ##print('termina loss y  gradientes')
-
                         gradien = ent.grad.data
-                        # print('derivadas')
-                        # print(gradien)
                         gradient_out = gradien
-                        ##print('gradientes de capa final=',i)
-                        ##print(gradien)
-                        # gradient_out = self._gradients[i][1]
-
-                        ##print('Valor de delta de capa = ', i)
                         delta = self.calculate_delta(gradient_out, Losgr)
-                        ##print(delta)
-                        ##print(delta.shape)
-                        ##print(delta.dtype)
-
-                        # delta = self.calculate_delta(Rn.layersObject[i].derivative(each_layer_output[i][1])
-                        #                                  , Rn.criteria(ytrain, each_layer_output[i][1]))
-                        # delta = delta.mean(axis=0)
 
                     else:
-                        # print('inicia las siguiente capa=', i)
-                        # ents = each_layer_output[i+1][0]
-                        # self._gradients[i+1][0] = ents.grad.data
-                        # gradient_outs = self._gradients[i+1][0]
-                        # print(gradient_outs)
-                        # print(gradient_outs.shape)
-
-                        # print('Empieza a calcular delta')
-                        # delta2 = self.calculate_delta(gradient_outs, torch.matmul(delta, Rn.layersObject[i+1].weights.T)
-                        # print(torch.matmul(delta, Rn.layersObject[i+1].weights.T))
-                        # if i==0:
-                        #    print(i)
-                        #    print(delta)
-                        #    print('pesos transpuestos')
-                        #    print(Rn.layersObject[i+1].weights.T)
-                        # print(i)
-                        # print(Rn.layersObject[i].derivative(each_layer_output[i+1][0])
-                        # ----------------nuevo-------------------------------
                         if imgcurr == True:
                             actbay = 0
                         else:
                             actbay = 1
-                        # -----------------------------------------------------
 
                         delta = self.calculate_delta(
                             Rn.layersObject[i].derivative(each_layer_output[i + 1][0]),
                             torch.matmul(delta, Rn.layersObject[i + 1].weights.T),
                         )
-
-                    # print(i)
-                    # print(delta.shape)
-                    # print(delta)
-                    # print(each_layer_output[i][0].shape)
-                    # print(Rn.layersObject[i].weights.shape)
 
                     Rn.layersObject[i].weights = self.update_weights(
                         delta,
@@ -361,9 +245,6 @@ class BaseOptimizer:
                         total=num_batches,
                         acbay=actbay,
                     )
-                    ##print(f'Ajustado peso: {i}')
-                    ##print(Rn.layersObject[i].weights)
-                    ##print(Rn.layersObject[i].weights.shape)
 
                     Rn.layersObject[i].bias = self.update_bias(
                         delta,
@@ -375,9 +256,6 @@ class BaseOptimizer:
                         layer_index=i,
                         acbay=actbay,
                     )
-                    ##print(f'Ajustado sesgo: {i}')
-                    ##print(Rn.layersObject[i].bias)
-                    ##print(Rn.layersObject[i].bias.shape)
 
                 ite_act += 1
                 if Rn.verbose == True:
@@ -389,14 +267,11 @@ class BaseOptimizer:
                         prefix="Progress:",
                     )
 
-            # para graficas almacenas perdidas y accuracy por batchs
             "Calcula la perdida de entrenamiento loss(SSE)"
             loss_b2 = np.append(loss_b2, running_loss().detach().numpy())
             ac_b2 = np.append(ac_b2, running_acc().detach().numpy())
-            ### Cambio porque asscalar ya no se usa###
-            # loss = np.round(np.asscalar(Losgr.data),4)
+
             loss = np.round(Losgr.data.item(), 4)
-            # Para guardar los mejores modelos y accuracy
             k_nam = str(k)
 
             if cv == True:
@@ -417,13 +292,11 @@ class BaseOptimizer:
                     best_acc = running_acc().data
                     acc_ini = best_acc
 
-            # Para imprimir accuracy y loss si verbse ==True
             ru_los = np.asarray(running_loss().data)
             ru_acc = np.asarray(running_acc().data)
 
             if Rn.verbose == True:
 
-                # print('learning rate:{0}, loss:{1}'.format(self.learning_rate,(running_loss().data:,.4f)))
                 print(
                     f"learning rate:{self.learning_rate} loss:{np.round(ru_los*1.0,4)}"
                 )
@@ -432,21 +305,6 @@ class BaseOptimizer:
                     print(f"Accuracy: {np.round(ru_acc*1,2)}%")
                 else:
                     print(f"Accuracy: {np.round(ru_acc*100.0,2)}%")
-            # ---------------------------------------------------------------------------------
-
-            # Para luego graficar el accuracy normal versus el bayesiano grabo los valores
-            # Bay=self.Bay
-            # if Bay==False:
-            #    n1 = 'Acc'
-            #    n2 = 'Loss'
-            # else:
-            #    n1 = 'Acc_Bay'
-            #    n2 = 'Loss_Bay'
-
-            # torch.save(ac_b2, n1)
-            # torch.save(loss_b2, n2)
-            # torch.save(run,'epoch')
-            # -------------------------------------------------------------------------------
 
             run += 1
 
@@ -583,39 +441,9 @@ class BaseOptimizer:
         print("---------------------------------------")
         print("-------Entrenamiento terminado---------")
         print("---------------------------------------")
-        # Para probar que esta grabando los ultimos valores obtenidos de pesos y sesgos
-        # ------------
-
-        # for i in range(len(Rn.layersObject)):
-
-        #    layer = Rn.layersObject[i]
-        #    print(type(layer))
-
-        #    print(f'Tamaño de pesos de capa {i}: {layer.weights.shape}')
-        #    print(layer.weights)
-        # ------------
-
-        # loss_b = np.array([]) # guarada la perdida en cada iteración
-        # loss_b2 = np.array([])
-        # ac_b = np.array([])
-        # ac_b2 = np.array([])
 
         for i in range(len(Rn.layersObject)):
             self._gradients[i] = 0
-
-        # sys.stdout.flush()
-
-        # --------------------------
-        # Esto eliminar solo utilizar en el caso que en backpro se coloque cv y tambien en RedNeuBay en def train
-        # if cv==False:
-        #    return Rn.layersObject
-        # else:
-        #    salida = Rn.layersObject # Se realiza esto para que guarde el modelo que tendra como salida y aplicar la funcion para
-        #                          que los pesos regresen a un valor aleatorio (esto es para CV) - en utils act_Weig_bias
-        #    act_Weig_bias(Rn.layersObject)
-
-        #    return salida
-        # -------------------------------
 
         salid = (
             Rn.layersObject
@@ -795,97 +623,6 @@ class BaseOptimizer:
         # Update bias with gradient
         new_bias = curr_bias - self.learning_rate * gradient
         return new_bias
-
-    # def update_bias(
-    #     self, delta, curr_bias, Bay, img, ite_act, total, layer_index, acbay
-    # ):
-    #     """
-    #     Al ser una funcion abstracta se divide para cada clase derivada
-    #     :delta:
-    #     :curr_bias: current bias of layer.
-    #     :regreso: Sesgos actualizados
-    #     """
-    #     # --------Proceso bayesiano-------------------------------------------------------
-    #     img = self.img
-
-    #     # if Bay==True: # Para que haga el bayesiano en cada batch de cada epoch
-    #     if (
-    #         Bay == True and ite_act == (total - 1) and acbay == 1
-    #     ):  # Para que haga el bayesiano en el ultimo batch de cada epoch
-
-    #         try:
-    #             # --------------------------------------------
-    #             # Para que no presente en consola el proceso
-    #             logger = logging.getLogger("pymc")
-    #             logger.setLevel(logging.CRITICAL)
-    #             # --------------------------------------------
-
-    #             # Analisis Bayesiano----------------------------------------------------------
-    #             delta_numpy = delta.data.numpy()
-
-    #             # Para hacer que el tunning varie por capas mas numerosas
-    #             tunb = 10
-
-    #             # Compute the summed_delta outside of PyMC model
-    #             summed_delta_numpy = np.sum(delta_numpy, axis=0, keepdims=True)
-
-    #             # Clear PyMC cache between runs
-    #             with pm.Model() as model:
-    #                 # Generate a simple model ID
-    #                 model_id = f"b{layer_index}_{np.random.randint(10000)}"
-
-    #                 # Defino priors con nombres simplificados
-    #                 delt_b = pm.Normal(
-    #                     f"db_{model_id}",
-    #                     mu=delta_numpy,
-    #                     sigma=0.01,
-    #                     shape=delta_numpy.shape,
-    #                 )
-    #                 sd_b = pm.Uniform(f"sd_{model_id}", 0, 100)
-
-    #                 # Use PyTensor's sum with the correct syntax
-    #                 delta_b = pm.Deterministic(
-    #                     f"delta_{model_id}", tt.sum(delt_b, axis=0)
-    #                 )
-
-    #                 # Define likelihood using precomputed summed_delta
-    #                 obs_pos_b = pm.Normal(
-    #                     f"obs_{model_id}",
-    #                     mu=delta_b,
-    #                     sigma=sd_b,
-    #                     observed=summed_delta_numpy,
-    #                 )
-
-    #                 # Elijo el modelo y obtengo muestras
-    #                 step = pm.NUTS()
-    #                 trace = pm.sample(
-    #                     5,
-    #                     step=step,
-    #                     tune=tunb,
-    #                     cores=1,
-    #                     chains=1,
-    #                     compute_convergence_checks=False,
-    #                     progressbar=True,
-    #                 )
-
-    #                 # Extract the mean directly inside the context manager
-    #                 db_values = trace[f"delta_{model_id}"]
-    #                 db_mean = db_values.mean(axis=0)
-
-    #             # Convert back to PyTorch Variable outside the context
-    #             db = Variable(torch.FloatTensor(db_mean), requires_grad=True)
-    #             gradient = db
-
-    #         except Exception as e:
-    #             # Fallback to standard gradient if Bayesian update fails
-    #             print(f"Bayesian update failed, using standard gradient: {str(e)}")
-    #             gradient = torch.sum(delta, dim=0, keepdim=True)
-    #     else:
-    #         gradient = torch.sum(delta, dim=0, keepdim=True)
-
-    #     # Update bias with gradient
-    #     new_bias = curr_bias - self.learning_rate * gradient
-    #     return new_bias
 
     def calculate_delta(self, derivative, loss):
         """

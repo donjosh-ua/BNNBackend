@@ -1,3 +1,4 @@
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 from app.bnn.RNA import train
@@ -97,40 +98,6 @@ def save_parameters_to_conf(params: dict):
             f.write(f'    "{key}": {formatted_value}{comma}\n')
 
         f.write("}\n")
-
-
-# @router.get("/results")
-# async def get_results():
-#     """
-#     Obtiene los resultados del entrenamiento de la red neuronal, incluyendo
-#     el JSON almacenado en results.json y los archivos de imagen (PNG) codificados en Base64.
-
-#     Returns:
-#         dict: Objeto con dos claves: 'results' con los datos JSON y 'images'
-#               con un diccionario de archivos imagen codificados.
-#     """
-#     try:
-#         # Load JSON results from file
-#         results_path = "./app/bnn/output/results.json"
-#         if not os.path.exists(results_path):
-#             raise HTTPException(status_code=404, detail="Results file not found.")
-#         with open(results_path, "r") as f:
-#             results_data = json.load(f)
-
-#         # Load any PNG images from the output folder and encode them
-#         images_folder = "./app/data/plots"
-#         images = {}
-#         for file in os.listdir(images_folder):
-#             if file.endswith(".png"):
-#                 file_path = os.path.join(images_folder, file)
-#                 with open(file_path, "rb") as img_file:
-#                     encoded_image = base64.b64encode(img_file.read()).decode("utf-8")
-#                     images[file] = encoded_image
-
-#         # Return both the JSON results and encoded images
-#         return {"results": results_data, "images": images}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/results")
@@ -264,3 +231,50 @@ async def train_rna(params: NeuralNetworkParameters):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/download")
+async def download_best_model():
+    """
+    Endpoint to download the best model of the training
+    Returns the best saved model as a downloadable file
+    """
+    try:
+        # Get the model name from the results.json or use default
+        parameters_path = "./app/config/nn_parameters.conf"
+        model_name = "ModiR"  # Default model name
+
+        if os.path.exists(parameters_path):
+            try:
+                with open(parameters_path, "r") as f:
+                    nn_parameters = json.load(f)
+                model_name = nn_parameters.get("save_mod", "ModiR")
+            except:
+                pass
+
+        # Construct the best model filename
+        best_model_filename = f"best_{model_name}"
+        model_path = f"./app/bnn/output/{best_model_filename}"
+
+        # Check if the model file exists
+        if not os.path.exists(model_path):
+            raise HTTPException(
+                status_code=404, detail=f"Model file not found: {best_model_filename}"
+            )
+
+        # Return the file as a download
+        return FileResponse(
+            path=model_path,
+            filename=f"{best_model_filename}.pth",
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f"attachment; filename={best_model_filename}.pth"
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error downloading model: {str(e)}"
+        )
